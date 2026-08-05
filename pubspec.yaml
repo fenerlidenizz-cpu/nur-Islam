@@ -1,0 +1,42 @@
+name: nur_islam
+description: >-
+  Nur Islam — Gebetszeiten nach Diyanet-Methode, Qibla-Finder und Tesbih.
+  Dauerhaft kostenlos, werbefrei, ohne Tracking, offlinefähig (DE/TR/EN).
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Standort für Gebetszeiten und Qibla-Peilung
+  geolocator: ^13.0.2
+
+  # Magnetsensor / Kompass-Heading für den Qibla-Finder
+  flutter_compass: ^0.8.0
+
+  # Lokale Speicherung: Einstellungen, letzter Standort, Offline-Kalender
+  shared_preferences: ^2.3.3
+
+  # Optionaler Diyanet-Feinabgleich (Monatskalender, danach offline)
+  http: ^1.2.2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  # assets:
+  #   - assets/images/
+  # fonts:
+  #   - family: Amiri
+  #     fonts:
+  #       - asset: assets/fonts/Amiri-Regular.ttf
