@@ -1397,12 +1397,13 @@ class AppState extends ChangeNotifier {
 
   bool _passesFilter(String name, String? denomination) {
     if (!onlySunni) return true;
+    // Nur ausschliessen, was eindeutig einer anderen Ausrichtung zugeordnet ist.
+    // Unbekannte oder fehlende Angaben bleiben drin — sonst verschwinden zu viele.
     final d = denomination?.toLowerCase().trim();
     if (d != null && d.isNotEmpty) {
-      if (_nonSunni.contains(d)) return false;
-      // Alles, was ausdrücklich sunnitisch oder eine sunnitische Rechtsschule ist:
-      const sunni = {'sunni', 'hanafi', 'shafii', 'shafi\'i', 'maliki', 'hanbali'};
-      if (!sunni.contains(d)) return false;
+      for (final part in d.split(RegExp(r'[;,/ ]+'))) {
+        if (_nonSunni.contains(part.trim())) return false;
+      }
     }
     final n = name.toLowerCase();
     return !_nonSunniNames.any(n.contains);
@@ -1935,6 +1936,7 @@ class _TimesTabState extends State<TimesTab> {
   Timer? _ticker;
   DateTime _now = DateTime.now();
   DateTime _selected = DateTime.now();
+  int _direction = 1; // 1 = vorwärts, -1 = zurück (steuert die Wischrichtung)
 
   bool get _isToday =>
       _selected.year == _now.year && _selected.month == _now.month && _selected.day == _now.day;
@@ -1954,8 +1956,18 @@ class _TimesTabState extends State<TimesTab> {
   }
 
   void _shiftDay(int days) {
-    setState(() => _selected = _selected.add(Duration(days: days)));
+    setState(() {
+      _direction = days >= 0 ? 1 : -1;
+      _selected = _selected.add(Duration(days: days));
+    });
     HapticFeedback.selectionClick();
+  }
+
+  void _jumpTo(DateTime target) {
+    setState(() {
+      _direction = target.isBefore(_selected) ? -1 : 1;
+      _selected = target;
+    });
   }
 
   Future<void> _pickDay() async {
@@ -1963,7 +1975,7 @@ class _TimesTabState extends State<TimesTab> {
       context,
       MaterialPageRoute(builder: (_) => CalendarPage(initial: _selected)),
     );
-    if (picked != null) setState(() => _selected = picked);
+    if (picked != null) _jumpTo(picked);
   }
 
   @override
@@ -1982,18 +1994,45 @@ class _TimesTabState extends State<TimesTab> {
           if (v < -250) _shiftDay(1);
           if (v > 250) _shiftDay(-1);
         },
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 32),
-          children: [
-            _DayHeader(
+        child: Column(children: [
+          _DayHeader(
               date: _selected,
               isToday: _isToday,
               onPrev: () => _shiftDay(-1),
               onNext: () => _shiftDay(1),
               onPick: _pickDay,
-              onToday: () => setState(() => _selected = DateTime.now()),
-            ),
-            if (day == null)
+            onToday: () => _jumpTo(DateTime.now()),
+          ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              layoutBuilder: (current, previous) =>
+                  Stack(alignment: Alignment.topCenter, children: [
+                ...previous,
+                if (current != null) current,
+              ]),
+              transitionBuilder: (child, animation) {
+                final incoming = child.key == ValueKey(appState.dayKey(_selected));
+                final begin = Offset(
+                  incoming ? _direction * 0.25 : -_direction * 0.25,
+                  0,
+                );
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(begin: begin, end: Offset.zero)
+                        .animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: ListView(
+                key: ValueKey(appState.dayKey(_selected)),
+                padding: const EdgeInsets.only(bottom: 32),
+                children: [
+                  if (day == null)
               const LocationNotice()
             else ...[
               Padding(
@@ -2076,15 +2115,19 @@ class _TimesTabState extends State<TimesTab> {
                   ),
                 ]),
               ),
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(tr('swipe_hint'),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(tr('swipe_hint'),
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.colorScheme.outline)),
+                  ),
+                ],
+                ],
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ]),
       ),
     );
   }
@@ -3330,11 +3373,24 @@ class TasbihTab extends StatelessWidget {
     final theme = Theme.of(context);
     final target = appState.tasbihTarget;
     final count = appState.tasbihCount;
-    final inRound = target > 0 ? count % target : count;
+    // Am Ziel bleibt die volle Zahl stehen statt auf 0 zu springen.
+    final inRound = appState.tasbihAtTarget ? target : (target > 0 ? count % target : count);
     final rounds = target > 0 ? count ~/ target : 0;
 
 
     return Stack(children: [
+      // Tippfläche liegt UNTER dem Inhalt, damit Knöpfe immer erreichbar bleiben.
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: MediaQuery.of(context).size.height / 3,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: appState.tasbihIncrement,
+          child: const SizedBox.expand(),
+        ),
+      ),
       ListView(
       padding: const EdgeInsets.only(bottom: 32),
       children: [
@@ -3358,6 +3414,7 @@ class TasbihTab extends StatelessWidget {
         Center(
           child: GestureDetector(
             onTap: appState.tasbihIncrement,
+            onLongPress: appState.tasbihReset,
             behavior: HitTestBehavior.opaque,
             child: SizedBox(
               width: 300,
@@ -3367,7 +3424,9 @@ class TasbihTab extends StatelessWidget {
                   size: const Size(300, 320),
                   painter: TasbihPainter(
                     beadCount: target > 33 ? 33 : target,
-                    filled: target > 33 ? (inRound == 0 && count > 0 ? 33 : inRound % 33) : inRound,
+                    filled: appState.tasbihAtTarget
+                        ? (target > 33 ? 33 : target)
+                        : (target > 33 ? inRound % 33 : inRound),
                     gold: pal.gold,
                     bead: pal.primary,
                     accent: pal.accent,
@@ -3438,19 +3497,8 @@ class TasbihTab extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ),
-        const SizedBox(height: 90),
+        const SizedBox(height: 120),
       ],
-      ),
-      // Unteres Drittel des Bildschirms zaehlt ebenfalls mit
-      Positioned(
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: MediaQuery.of(context).size.height / 3,
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: appState.tasbihIncrement,
-        ),
       ),
     ]);
   }
