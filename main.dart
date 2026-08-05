@@ -357,6 +357,55 @@ const Map<String, List<String>> _strings = {
         'your device.',
   ],
   'km': ['km', 'km', 'km'],
+
+  // Tagesnavigation
+  'today_button': ['Heute', 'Bugün', 'Today'],
+  'pick_day': ['Tag wählen', 'Gün seç', 'Pick a day'],
+  'swipe_hint': ['Wischen für andere Tage', 'Diğer günler için kaydır', 'Swipe for other days'],
+
+  // Moschee als Zeitquelle
+  'src_calc_short': ['Berechnet', 'Hesaplanan', 'Calculated'],
+  'times_from': ['Zeiten von', 'Vakitler', 'Times from'],
+  'mosque_info': ['Moschee-Infos', 'Cami bilgileri', 'Mosque info'],
+  'call': ['Anrufen', 'Ara', 'Call'],
+  'route': ['Wegbeschreibung', 'Yol tarifi', 'Directions'],
+  'website': ['Webseite', 'Web sitesi', 'Website'],
+  'opening_hours': ['Öffnungszeiten', 'Açılış saatleri', 'Opening hours'],
+  'no_info': ['Keine Angabe in OpenStreetMap', 'OpenStreetMap\'te bilgi yok', 'Not recorded in OpenStreetMap'],
+  'use_this_mosque': ['Zeiten dieser Moschee übernehmen', 'Bu caminin vakitlerini kullan', 'Use this mosque\'s times'],
+  'change_mosque': ['Moschee wechseln', 'Cami değiştir', 'Change mosque'],
+  'clear_mosque': ['Keine Moschee — eigener Standort', 'Cami yok — kendi konumum', 'No mosque — my own location'],
+  'mosque_active': ['Zeiten beziehen sich auf diese Moschee', 'Vakitler bu camiye göre', 'Times are based on this mosque'],
+  'mosque_times_explain': [
+    'Die Zeiten werden für die Koordinaten dieser Moschee gerechnet. Die Gemeinde kann '
+        'für das Gemeinschaftsgebet abweichende Zeiten ansagen — die kannst du unter '
+        '„Eigene Zeiten einfügen" hinterlegen.',
+    'Vakitler bu caminin koordinatlarına göre hesaplanır. Cemaat, cemaatle namaz için farklı '
+        'vakit okuyabilir — bunları „Kendi vakitlerini gir" bölümüne yazabilirsin.',
+    'Times are calculated for this mosque\'s coordinates. The congregation may announce '
+        'different times for the congregational prayer — you can enter those under '
+        '„Paste your own times".',
+  ],
+  'enter_jamaat': ['Zeiten dieser Moschee eintragen', 'Bu caminin vakitlerini gir', 'Enter this mosque\'s times'],
+
+  // Kerahat
+  'kerahat': ['Kerahat-Zeiten', 'Kerahat vakitleri', 'Makruh times'],
+  'kerahat_show': ['Kerahat-Zeiten anzeigen', 'Kerahat vakitlerini göster', 'Show makruh times'],
+  'kerahat_hint': [
+    'Zeiten, in denen das Gebet als unerwünscht gilt: nach dem Sonnenaufgang, kurz vor dem '
+        'Mittag und vor dem Sonnenuntergang. Die Längen kannst du an deine Moschee anpassen.',
+    'Namazın mekruh sayıldığı vakitler: güneş doğduktan sonra, öğleden hemen önce ve '
+        'güneş batmadan önce. Süreleri camine göre ayarlayabilirsin.',
+    'Times when prayer is considered disliked: after sunrise, shortly before noon and before '
+        'sunset. You can adjust the durations to match your mosque.',
+  ],
+  'k_israk': ['Nach Sonnenaufgang', 'Güneş doğduktan sonra', 'After sunrise'],
+  'k_istiva': ['Mittagsstand', 'İstiva', 'Solar noon'],
+  'k_isfirar': ['Vor Sonnenuntergang', 'Güneş batmadan önce', 'Before sunset'],
+  'kerahat_in': ['bis Kerahat', 'Kerahat\'a', 'until makruh time'],
+  'kerahat_now': ['Kerahat-Zeit läuft', 'Kerahat vakti', 'Makruh time'],
+  'kerahat_ends': ['endet in', 'bitiyor', 'ends in'],
+  'minutes': ['Minuten', 'dakika', 'minutes'],
 };
 
 String tr(String key) {
@@ -468,7 +517,7 @@ class DayTimes {
 class Mosque {
   final String name;
   final double lat, lng;
-  final String? street, city, denomination;
+  final String? street, city, denomination, phone, website, openingHours;
   const Mosque({
     required this.name,
     required this.lat,
@@ -476,10 +525,17 @@ class Mosque {
     this.street,
     this.city,
     this.denomination,
+    this.phone,
+    this.website,
+    this.openingHours,
   });
 
-  Map<String, dynamic> toJson() =>
-      {'n': name, 'la': lat, 'lo': lng, 's': street, 'c': city, 'd': denomination};
+  String get address => [street, city].whereType<String>().where((s) => s.isNotEmpty).join(', ');
+
+  Map<String, dynamic> toJson() => {
+        'n': name, 'la': lat, 'lo': lng, 's': street, 'c': city,
+        'd': denomination, 'p': phone, 'w': website, 'o': openingHours,
+      };
 
   factory Mosque.fromJson(Map<String, dynamic> j) => Mosque(
         name: j['n'] as String,
@@ -488,6 +544,9 @@ class Mosque {
         street: j['s'] as String?,
         city: j['c'] as String?,
         denomination: j['d'] as String?,
+        phone: j['p'] as String?,
+        website: j['w'] as String?,
+        openingHours: j['o'] as String?,
       );
 }
 
@@ -757,11 +816,22 @@ class AppState extends ChangeNotifier {
   List<Mosque> mosques = [];
   int mosqueRadiusKm = 5;
   bool onlySunni = true;
+  // Womit wurde die gespeicherte Liste gefunden?
+  double? _searchLat, _searchLng;
+  int? _searchRadius;
   String? myMosque;
+  Mosque? refMosque; // Moschee, auf die sich die Zeiten beziehen
+  bool useMosqueLocation = true;
   bool mosquesLoading = false;
   String? mosqueError;
 
   int tasbihCount = 0, tasbihTarget = 33, dhikrIndex = 0;
+
+  // Kerahat
+  bool showKerahat = false;
+  int kerahatSunriseMin = 45;
+  int kerahatIstivaMin = 15;
+  int kerahatSunsetMin = 45;
 
   // Tracker
   String userName = '';
@@ -794,9 +864,21 @@ class AppState extends ChangeNotifier {
     tasbihTarget = _p.getInt('tasbihTarget') ?? 33;
     dhikrIndex = _p.getInt('dhikrIndex') ?? 0;
     mosqueRadiusKm = _p.getInt('mosqueRadius') ?? 5;
+    _searchLat = _p.getDouble('searchLat');
+    _searchLng = _p.getDouble('searchLng');
+    _searchRadius = _p.getInt('searchRadius');
     onlySunni = _p.getBool('onlySunni') ?? true;
     myMosque = _p.getString('myMosque');
+    useMosqueLocation = _p.getBool('useMosqueLocation') ?? true;
+    final rm = _p.getString('refMosque');
+    if (rm != null) {
+      refMosque = Mosque.fromJson(jsonDecode(rm) as Map<String, dynamic>);
+    }
     userName = _p.getString('userName') ?? '';
+    showKerahat = _p.getBool('showKerahat') ?? false;
+    kerahatSunriseMin = _p.getInt('kSunrise') ?? 45;
+    kerahatIstivaMin = _p.getInt('kIstiva') ?? 15;
+    kerahatSunsetMin = _p.getInt('kSunset') ?? 45;
 
     final o = _p.getString('offsets');
     if (o != null) {
@@ -871,6 +953,62 @@ class AppState extends ChangeNotifier {
     offsets[p] = minutes.clamp(-30, 30);
     _p.setString('offsets', jsonEncode({for (final e in offsets.entries) e.key.name: e.value}));
     notifyListeners();
+  }
+
+  void setShowKerahat(bool v) {
+    showKerahat = v;
+    _p.setBool('showKerahat', v);
+    notifyListeners();
+  }
+
+  void setKerahatMinutes({int? sunrise, int? istiva, int? sunset}) {
+    if (sunrise != null) {
+      kerahatSunriseMin = sunrise.clamp(0, 90);
+      _p.setInt('kSunrise', kerahatSunriseMin);
+    }
+    if (istiva != null) {
+      kerahatIstivaMin = istiva.clamp(0, 60);
+      _p.setInt('kIstiva', kerahatIstivaMin);
+    }
+    if (sunset != null) {
+      kerahatSunsetMin = sunset.clamp(0, 90);
+      _p.setInt('kSunset', kerahatSunsetMin);
+    }
+    notifyListeners();
+  }
+
+  /// Die drei Kerahat-Fenster eines Tages: Beginn, Ende, Bezeichner.
+  List<(DateTime, DateTime, String)> kerahatWindows(DateTime date) {
+    final d = timesFor(date);
+    if (d == null) return const [];
+    final out = <(DateTime, DateTime, String)>[];
+    final sr = d[P.sunrise], dh = d[P.dhuhr], mg = d[P.maghrib];
+    if (sr != null && kerahatSunriseMin > 0) {
+      out.add((sr, sr.add(Duration(minutes: kerahatSunriseMin)), 'k_israk'));
+    }
+    if (dh != null && kerahatIstivaMin > 0) {
+      out.add((dh.subtract(Duration(minutes: kerahatIstivaMin)), dh, 'k_istiva'));
+    }
+    if (mg != null && kerahatSunsetMin > 0) {
+      out.add((mg.subtract(Duration(minutes: kerahatSunsetMin)), mg, 'k_isfirar'));
+    }
+    out.sort((a, b) => a.$1.compareTo(b.$1));
+    return out;
+  }
+
+  (DateTime, DateTime, String)? currentKerahat(DateTime now) {
+    for (final w in kerahatWindows(now)) {
+      if (!now.isBefore(w.$1) && now.isBefore(w.$2)) return w;
+    }
+    return null;
+  }
+
+  (DateTime, DateTime, String)? nextKerahat(DateTime now) {
+    for (final w in kerahatWindows(now)) {
+      if (w.$1.isAfter(now)) return w;
+    }
+    final tomorrow = kerahatWindows(now.add(const Duration(days: 1)));
+    return tomorrow.isEmpty ? null : tomorrow.first;
   }
 
   void setUserName(String v) {
@@ -1153,6 +1291,14 @@ out center 100;
         final street = [tags['addr:street'], tags['addr:housenumber']]
             .whereType<String>()
             .join(' ');
+        String? tag(List<String> keys) {
+          for (final k in keys) {
+            final v = tags[k];
+            if (v is String && v.trim().isNotEmpty) return v.trim();
+          }
+          return null;
+        }
+
         found.add(Mosque(
           name: name,
           lat: mLat.toDouble(),
@@ -1160,12 +1306,36 @@ out center 100;
           street: street.isEmpty ? null : street,
           city: tags['addr:city'] as String?,
           denomination: denom,
+          phone: tag(['phone', 'contact:phone', 'contact:mobile']),
+          website: tag(['website', 'contact:website', 'contact:facebook']),
+          openingHours: tag(['opening_hours', 'service_times']),
         ));
       }
-      found.sort((a, b) => distanceKm(lat!, lng!, a.lat, a.lng)
-          .compareTo(distanceKm(lat!, lng!, b.lat, b.lng)));
-      mosques = found;
-      await _p.setString('mosques', jsonEncode(found.map((m) => m.toJson()).toList()));
+      // Overpass liefert gelegentlich Treffer knapp ausserhalb des Umkreises und
+      // dieselbe Moschee doppelt (einmal als Punkt, einmal als Flaeche).
+      final limit = mosqueRadiusKm.toDouble();
+      final within = found
+          .where((m) => distanceKm(lat!, lng!, m.lat, m.lng) <= limit)
+          .toList()
+        ..sort((a, b) => distanceKm(lat!, lng!, a.lat, a.lng)
+            .compareTo(distanceKm(lat!, lng!, b.lat, b.lng)));
+
+      final unique = <Mosque>[];
+      for (final m in within) {
+        final dup = unique.any((u) =>
+            u.name.toLowerCase() == m.name.toLowerCase() &&
+            distanceKm(u.lat, u.lng, m.lat, m.lng) < 0.15);
+        if (!dup) unique.add(m);
+      }
+
+      mosques = unique;
+      _searchLat = lat;
+      _searchLng = lng;
+      _searchRadius = mosqueRadiusKm;
+      await _p.setString('mosques', jsonEncode(unique.map((m) => m.toJson()).toList()));
+      await _p.setDouble('searchLat', lat!);
+      await _p.setDouble('searchLng', lng!);
+      await _p.setInt('searchRadius', mosqueRadiusKm);
     } catch (e) {
       mosqueError = e.toString();
     }
@@ -1173,10 +1343,30 @@ out center 100;
     notifyListeners();
   }
 
+  /// Zeigt nur, was wirklich im gewaehlten Umkreis liegt — auch wenn die
+  /// gespeicherte Liste aus einer frueheren, groesseren Suche stammt.
+  List<Mosque> get visibleMosques {
+    if (lat == null || lng == null) return const [];
+    return mosques
+        .where((m) => distanceKm(lat!, lng!, m.lat, m.lng) <= mosqueRadiusKm.toDouble())
+        .toList()
+      ..sort((a, b) => distanceKm(lat!, lng!, a.lat, a.lng)
+          .compareTo(distanceKm(lat!, lng!, b.lat, b.lng)));
+  }
+
+  /// Wahr, wenn die gespeicherte Liste zu einem anderen Ort oder Umkreis gehoert.
+  bool get mosquesStale {
+    if (lat == null || lng == null) return false;
+    if (_searchRadius == null || _searchLat == null || _searchLng == null) return true;
+    if (_searchRadius != mosqueRadiusKm) return true;
+    return distanceKm(_searchLat!, _searchLng!, lat!, lng!) > 0.5;
+  }
+
   void setMosqueRadius(int km) {
     mosqueRadiusKm = km;
     _p.setInt('mosqueRadius', km);
     notifyListeners();
+    loadMosques();
   }
 
   void setOnlySunni(bool v) {
@@ -1196,6 +1386,37 @@ out center 100;
     notifyListeners();
   }
 
+  /// Legt fest, auf welche Moschee sich die angezeigten Zeiten beziehen.
+  void setReferenceMosque(Mosque? m) {
+    refMosque = m;
+    myMosque = m?.name;
+    if (m == null) {
+      _p.remove('refMosque');
+      _p.remove('myMosque');
+    } else {
+      _p.setString('refMosque', jsonEncode(m.toJson()));
+      _p.setString('myMosque', m.name);
+    }
+    notifyListeners();
+    if (timeSource == TimeSource.online) unawaited(syncOnline());
+  }
+
+  void setUseMosqueLocation(bool v) {
+    useMosqueLocation = v;
+    _p.setBool('useMosqueLocation', v);
+    notifyListeners();
+    if (timeSource == TimeSource.online) unawaited(syncOnline());
+  }
+
+  /// Koordinaten, mit denen gerechnet wird — Moschee, falls gewaehlt.
+  double? get calcLat =>
+      (useMosqueLocation && refMosque != null) ? refMosque!.lat : lat;
+  double? get calcLng =>
+      (useMosqueLocation && refMosque != null) ? refMosque!.lng : lng;
+
+  String get timeSourceLabel =>
+      refMosque?.name ?? (placeLabel?.split(',').first.trim() ?? tr('src_calc_short'));
+
   // --- Online-Abgleich ---
   Future<bool> syncOnline() async {
     if (lat == null || lng == null || syncing) return false;
@@ -1207,8 +1428,8 @@ out center 100;
       for (var i = 0; i < 2; i++) {
         final d = DateTime(now.year, now.month + i, 1);
         final uri = Uri.https('api.aladhan.com', '/v1/calendar', {
-          'latitude': '$lat',
-          'longitude': '$lng',
+          'latitude': '${calcLat ?? lat}',
+          'longitude': '${calcLng ?? lng}',
           'method': '13', // Diyanet İşleri Başkanlığı
           'school': asrShadowFactor == 2 ? '1' : '0',
           'month': '${d.month}',
@@ -1281,15 +1502,16 @@ out center 100;
     final day = DateTime(date.year, date.month, date.day);
     final custom = _fromTable(customTimes, day, TimeSource.custom);
     if (custom != null) return custom;
-    if (lat == null || lng == null) return null;
+    final cLat = calcLat, cLng = calcLng;
+    if (cLat == null || cLng == null) return null;
     if (timeSource == TimeSource.online) {
       final online = _fromTable(onlineTimes, day, TimeSource.online);
       if (online != null) return online;
     }
     return PrayerCalculator.compute(
       date: day,
-      lat: lat!,
-      lng: lng!,
+      lat: cLat,
+      lng: cLng,
       shadowFactor: asrShadowFactor,
       fajrAngle: fajrAngle,
       ishaAngle: ishaAngle,
@@ -1550,6 +1772,10 @@ class TimesTab extends StatefulWidget {
 class _TimesTabState extends State<TimesTab> {
   Timer? _ticker;
   DateTime _now = DateTime.now();
+  DateTime _selected = DateTime.now();
+
+  bool get _isToday =>
+      _selected.year == _now.year && _selected.month == _now.month && _selected.day == _now.day;
 
   @override
   void initState() {
@@ -1565,93 +1791,355 @@ class _TimesTabState extends State<TimesTab> {
     super.dispose();
   }
 
+  void _shiftDay(int days) {
+    setState(() => _selected = _selected.add(Duration(days: days)));
+    HapticFeedback.selectionClick();
+  }
+
+  Future<void> _pickDay() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selected,
+      firstDate: DateTime(_now.year - 2),
+      lastDate: DateTime(_now.year + 2),
+      helpText: tr('pick_day'),
+    );
+    if (picked != null) setState(() => _selected = picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final day = appState.timesFor(_now);
+    final day = appState.timesFor(_selected);
 
     return RefreshIndicator(
       onRefresh: () async {
         if (!appState.manualLocation) await appState.refreshLocation();
         if (appState.timeSource == TimeSource.online) await appState.syncOnline();
       },
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          PageHeader(title: longDate(_now), subtitle: appState.locationLabel),
-          if (day == null)
-            const LocationNotice()
-          else ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _NextPrayerCard(now: _now),
+      child: GestureDetector(
+        onHorizontalDragEnd: (d) {
+          final v = d.primaryVelocity ?? 0;
+          if (v < -250) _shiftDay(1);
+          if (v > 250) _shiftDay(-1);
+        },
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 32),
+          children: [
+            _DayHeader(
+              date: _selected,
+              isToday: _isToday,
+              onPrev: () => _shiftDay(-1),
+              onNext: () => _shiftDay(1),
+              onPick: _pickDay,
+              onToday: () => setState(() => _selected = DateTime.now()),
             ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Card(
-                child: Column(
-                  children: [for (final p in P.values) _PrayerRow(p: p, day: day, now: _now)],
-                ),
+            if (day == null)
+              const LocationNotice()
+            else ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _isToday
+                    ? _NextPrayerCard(now: _now)
+                    : _DaySummaryCard(day: day, date: _selected),
               ),
-            ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _TrackerCard(now: _now),
-            ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Card(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [
-                        Icon(Icons.auto_awesome_outlined, size: 18, color: pal.gold),
-                        const SizedBox(width: 8),
-                        Text(tr('motivation'),
-                            style: theme.textTheme.labelLarge
-                                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                      ]),
-                      const SizedBox(height: 10),
-                      Text(motivationOfTheDay(_now),
-                          style: theme.textTheme.titleMedium?.copyWith(height: 1.4)),
+                      for (final p in P.values)
+                        _PrayerRow(p: p, day: day, date: _selected, now: _now, isToday: _isToday),
                     ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(children: [
-                Icon(
-                  switch (day.source) {
-                    TimeSource.custom => Icons.edit_note,
-                    TimeSource.online => Icons.cloud_done_outlined,
-                    TimeSource.calculated => Icons.offline_bolt_outlined,
-                  },
-                  size: 15,
-                  color: theme.colorScheme.outline,
+              if (appState.showKerahat) ...[
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _KerahatCard(date: _selected, now: _now, isToday: _isToday),
                 ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    switch (day.source) {
-                      TimeSource.custom => tr('source_custom'),
-                      TimeSource.online => tr('source_synced'),
-                      TimeSource.calculated => tr('source_local'),
-                    },
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+              ],
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _TrackerCard(now: _selected),
+              ),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.auto_awesome_outlined, size: 18, color: pal.gold),
+                          const SizedBox(width: 8),
+                          Text(tr('motivation'),
+                              style: theme.textTheme.labelLarge
+                                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                        ]),
+                        const SizedBox(height: 10),
+                        Text(motivationOfTheDay(_selected),
+                            style: theme.textTheme.titleMedium?.copyWith(height: 1.4)),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(children: [
+                  Icon(
+                    switch (day.source) {
+                      TimeSource.custom => Icons.edit_note,
+                      TimeSource.online => Icons.cloud_done_outlined,
+                      TimeSource.calculated => Icons.offline_bolt_outlined,
+                    },
+                    size: 15,
+                    color: theme.colorScheme.outline,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      switch (day.source) {
+                        TimeSource.custom => tr('source_custom'),
+                        TimeSource.online => tr('source_synced'),
+                        TimeSource.calculated => tr('source_local'),
+                      },
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+                    ),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(tr('swipe_hint'),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Kopfzeile mit Tagesnavigation und der Moschee, auf die sich die Zeiten beziehen.
+class _DayHeader extends StatelessWidget {
+  final DateTime date;
+  final bool isToday;
+  final VoidCallback onPrev, onNext, onPick, onToday;
+  const _DayHeader({
+    required this.date,
+    required this.isToday,
+    required this.onPrev,
+    required this.onNext,
+    required this.onPick,
+    required this.onToday,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(appState.locationLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              ),
+              // Quelle der Zeiten, antippbar
+              Flexible(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const MosqueSourcePage())),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: pal.gold.withValues(alpha: 0.45)),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(appState.refMosque != null ? Icons.mosque : Icons.calculate_outlined,
+                          size: 13, color: pal.gold),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          appState.timeSourceLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall?.copyWith(color: pal.gold),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              IconButton(
+                onPressed: onPrev,
+                icon: const Icon(Icons.chevron_left),
+                tooltip: '-1',
+              ),
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: onPick,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Column(children: [
+                      Text(longDate(date),
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3)),
+                      if (!isToday)
+                        Text(tr('pick_day'),
+                            style: theme.textTheme.labelSmall
+                                ?.copyWith(color: theme.colorScheme.outline)),
+                    ]),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: onNext,
+                icon: const Icon(Icons.chevron_right),
+                tooltip: '+1',
+              ),
+              if (!isToday)
+                TextButton(onPressed: onToday, child: Text(tr('today_button')))
+              else
+                IconButton(onPressed: onPick, icon: const Icon(Icons.calendar_month_outlined)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Übersicht für einen Tag, der nicht heute ist.
+class _DaySummaryCard extends StatelessWidget {
+  final DayTimes day;
+  final DateTime date;
+  const _DaySummaryCard({required this.day, required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [pal.primary, pal.deep],
+        ),
+        border: Border.all(color: pal.gold.withValues(alpha: 0.35)),
+      ),
+      padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (final p in [P.fajr, P.dhuhr, P.asr, P.maghrib, P.isha])
+            Column(children: [
+              Icon(p.icon, size: 16, color: pal.gold),
+              const SizedBox(height: 6),
+              Text(fmtTime(day[p]),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: [FontFeature.tabularFigures()])),
+            ]),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kerahat-Karte mit Countdown.
+class _KerahatCard extends StatelessWidget {
+  final DateTime date, now;
+  final bool isToday;
+  const _KerahatCard({required this.date, required this.now, required this.isToday});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final windows = appState.kerahatWindows(date);
+    if (windows.isEmpty) return const SizedBox.shrink();
+
+    final current = isToday ? appState.currentKerahat(now) : null;
+    final next = isToday ? appState.nextKerahat(now) : null;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.do_not_disturb_on_outlined, size: 18, color: pal.gold),
+            const SizedBox(width: 8),
+            Text(tr('kerahat'),
+                style: theme.textTheme.labelLarge
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          ]),
+          if (isToday) ...[
+            const SizedBox(height: 10),
+            if (current != null)
+              Row(children: [
+                Icon(Icons.warning_amber_rounded, size: 18, color: theme.colorScheme.error),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('${tr('kerahat_now')} · ${tr('kerahat_ends')} '
+                      '${fmtDuration(current.$2.difference(now))}'),
+                ),
+              ])
+            else if (next != null)
+              Row(children: [
+                const Icon(Icons.hourglass_bottom, size: 16),
+                const SizedBox(width: 8),
+                Text(fmtDuration(next.$1.difference(now)),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()])),
+                const SizedBox(width: 8),
+                Expanded(child: Text('${tr('kerahat_in')} · ${tr(next.$3)}')),
+              ]),
+          ],
+          const SizedBox(height: 12),
+          for (final w in windows)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(children: [
+                SizedBox(
+                  width: 132,
+                  child: Text(tr(w.$3), style: theme.textTheme.bodySmall),
+                ),
+                Text('${fmtTime(w.$1)} – ${fmtTime(w.$2)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        fontFeatures: const [FontFeature.tabularFigures()])),
               ]),
             ),
-          ],
-        ],
+        ]),
       ),
     );
   }
@@ -1673,6 +2161,9 @@ class _NextPrayerCard extends StatelessWidget {
       final done = now.difference(current.value).inSeconds;
       if (total > 0) progress = (done / total).clamp(0.0, 1.0);
     }
+
+    final kerahatNow = appState.showKerahat ? appState.currentKerahat(now) : null;
+    final kerahatNext = appState.showKerahat ? appState.nextKerahat(now) : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -1723,6 +2214,37 @@ class _NextPrayerCard extends StatelessWidget {
             const SizedBox(width: 8),
             Text(tr('remaining'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
           ]),
+          if (appState.showKerahat && (kerahatNow != null || kerahatNext != null)) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(children: [
+                Icon(
+                  kerahatNow != null
+                      ? Icons.warning_amber_rounded
+                      : Icons.do_not_disturb_on_outlined,
+                  size: 15,
+                  color: kerahatNow != null ? const Color(0xFFE0A03A) : Colors.white70,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    kerahatNow != null
+                        ? '${tr('kerahat_now')} · ${tr('kerahat_ends')} ${fmtDuration(kerahatNow.$2.difference(now))}'
+                        : '${fmtDuration(kerahatNext!.$1.difference(now))} ${tr('kerahat_in')}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                        fontFeatures: [FontFeature.tabularFigures()]),
+                  ),
+                ),
+              ]),
+            ),
+          ],
         ],
       ),
     );
@@ -1732,14 +2254,21 @@ class _NextPrayerCard extends StatelessWidget {
 class _PrayerRow extends StatelessWidget {
   final P p;
   final DayTimes day;
-  final DateTime now;
-  const _PrayerRow({required this.p, required this.day, required this.now});
+  final DateTime date, now;
+  final bool isToday;
+  const _PrayerRow({
+    required this.p,
+    required this.day,
+    required this.date,
+    required this.now,
+    required this.isToday,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isCurrent = appState.currentPeriod(now)?.key == p;
-    final done = p.isPrayer && appState.hasPrayed(now, p);
+    final isCurrent = isToday && appState.currentPeriod(now)?.key == p;
+    final done = p.isPrayer && appState.hasPrayed(date, p);
 
     return Container(
       decoration: BoxDecoration(
@@ -1763,7 +2292,7 @@ class _PrayerRow extends StatelessWidget {
             )),
         if (p.isPrayer)
           IconButton(
-            onPressed: () => appState.togglePrayed(now, p),
+            onPressed: () => appState.togglePrayed(date, p),
             icon: Icon(
               done ? Icons.check_circle : Icons.circle_outlined,
               color: done ? pal.accent : theme.colorScheme.outlineVariant,
@@ -2021,7 +2550,10 @@ class _MosquesTabState extends State<MosquesTab> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (appState.mosques.isEmpty && appState.lat != null) appState.loadMosques();
+      if (appState.lat != null &&
+          (appState.mosques.isEmpty || appState.mosquesStale)) {
+        appState.loadMosques();
+      }
     });
   }
 
@@ -2036,10 +2568,15 @@ class _MosquesTabState extends State<MosquesTab> {
       ]);
     }
 
+    final visible = appState.visibleMosques;
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 32),
       children: [
-        PageHeader(title: tr('mosques_title'), subtitle: appState.locationLabel),
+        PageHeader(
+          title: tr('mosques_title'),
+          subtitle: '${appState.locationLabel} · ${tr('radius')} ${appState.mosqueRadiusKm} ${tr('km')}',
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(children: [
@@ -2051,10 +2588,7 @@ class _MosquesTabState extends State<MosquesTab> {
                 child: ChoiceChip(
                   label: Text('$km'),
                   selected: appState.mosqueRadiusKm == km,
-                  onSelected: (_) {
-                    appState.setMosqueRadius(km);
-                    appState.loadMosques();
-                  },
+                  onSelected: (_) => appState.setMosqueRadius(km),
                 ),
               ),
             const Spacer(),
@@ -2082,7 +2616,7 @@ class _MosquesTabState extends State<MosquesTab> {
               Text(tr('mosques_loading')),
             ]),
           )
-        else if (appState.mosqueError != null && appState.mosques.isEmpty)
+        else if (appState.mosqueError != null && visible.isEmpty)
           Padding(
             padding: const EdgeInsets.all(28),
             child: Column(children: [
@@ -2097,7 +2631,7 @@ class _MosquesTabState extends State<MosquesTab> {
               ),
             ]),
           )
-        else if (appState.mosques.isEmpty)
+        else if (visible.isEmpty)
           Padding(
             padding: const EdgeInsets.all(28),
             child: Text(tr('mosques_none'), textAlign: TextAlign.center),
@@ -2107,9 +2641,9 @@ class _MosquesTabState extends State<MosquesTab> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Card(
               child: Column(children: [
-                for (var i = 0; i < appState.mosques.length; i++) ...[
+                for (var i = 0; i < visible.length; i++) ...[
                   if (i > 0) const Divider(height: 1),
-                  _MosqueRow(m: appState.mosques[i]),
+                  _MosqueRow(m: visible[i]),
                 ],
               ]),
             ),
@@ -2149,17 +2683,23 @@ class _MosqueRow extends StatelessWidget {
         if (sub.isNotEmpty) sub,
         d < 1 ? '${(d * 1000).round()} m' : '${d.toStringAsFixed(1)} ${tr('km')}',
       ].join(' · ')),
+      onTap: () => Navigator.push(
+          context, MaterialPageRoute(builder: (_) => MosqueDetailPage(mosque: m))),
       trailing: PopupMenuButton<String>(
         onSelected: (v) {
-          if (v == 'maps') {
-            openMaps(m.lat, m.lng, m.name);
-          } else {
-            appState.setMyMosque(isMine ? null : m.name);
+          switch (v) {
+            case 'maps':
+              openMaps(m.lat, m.lng, m.name);
+            case 'call':
+              if (m.phone != null) launchUrl(Uri.parse('tel:${m.phone}'));
+            case 'ref':
+              appState.setReferenceMosque(isMine ? null : m);
           }
         },
         itemBuilder: (_) => [
-          PopupMenuItem(value: 'maps', child: Text(tr('open_in_maps'))),
           PopupMenuItem(value: 'ref', child: Text(tr('set_reference'))),
+          PopupMenuItem(value: 'maps', child: Text(tr('route'))),
+          if (m.phone != null) PopupMenuItem(value: 'call', child: Text(tr('call'))),
         ],
       ),
     );
@@ -2184,6 +2724,14 @@ class _QiblaTabState extends State<QiblaTab> {
   StreamSubscription<CompassEvent>? _sub;
 
   static const double _tolerance = 3.0;
+
+  /// 0 = weit weg, 1 = genau ausgerichtet. Ab 60° Abweichung bleibt es dunkel.
+  double _glow(double? delta) {
+    if (delta == null) return 0;
+    final d = delta.abs().clamp(0.0, 60.0);
+    final v = 1 - d / 60.0;
+    return v * v; // quadratisch, damit es erst nah am Ziel deutlich aufleuchtet
+  }
 
   @override
   void initState() {
@@ -2267,6 +2815,22 @@ class _QiblaTabState extends State<QiblaTab> {
             width: 320,
             height: 320,
             child: Stack(alignment: Alignment.center, children: [
+              // Lichtring: je näher an der Qibla, desto heller
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                width: 320,
+                height: 320,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: pal.gold.withValues(alpha: 0.55 * _glow(delta)),
+                      blurRadius: 26 + 34 * _glow(delta),
+                      spreadRadius: 2 + 10 * _glow(delta),
+                    ),
+                  ],
+                ),
+              ),
               Transform.rotate(
                 angle: -((heading ?? 0) * math.pi / 180),
                 child: CustomPaint(
@@ -2595,7 +3159,7 @@ class TasbihTab extends StatelessWidget {
     final count = appState.tasbihCount;
     final inRound = target > 0 ? count % target : count;
     final rounds = target > 0 ? count ~/ target : 0;
-    final progress = target > 0 ? inRound / target : 0.0;
+
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 32),
@@ -2620,39 +3184,39 @@ class TasbihTab extends StatelessWidget {
         Center(
           child: GestureDetector(
             onTap: appState.tasbihIncrement,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [pal.primary, pal.deep],
-                ),
-                border: Border.all(color: pal.gold.withValues(alpha: 0.4)),
-              ),
+            behavior: HitTestBehavior.opaque,
+            child: SizedBox(
+              width: 300,
+              height: 320,
               child: Stack(alignment: Alignment.center, children: [
-                SizedBox(
-                  width: 220,
-                  height: 220,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 6,
-                    backgroundColor: Colors.white24,
-                    valueColor: AlwaysStoppedAnimation(pal.gold),
+                CustomPaint(
+                  size: const Size(300, 320),
+                  painter: TasbihPainter(
+                    beadCount: target > 33 ? 33 : target,
+                    filled: target > 33 ? inRound % 33 : inRound,
+                    gold: pal.gold,
+                    bead: pal.primary,
+                    accent: pal.accent,
+                    shadow: pal.deep,
                   ),
                 ),
-                Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text(appState.currentDhikr, style: TextStyle(color: pal.gold, fontSize: 15)),
-                  const SizedBox(height: 6),
-                  Text('$inRound',
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 64, fontWeight: FontWeight.w300, height: 1.0)),
-                  const SizedBox(height: 4),
-                  Text('${tr('tasbih_target')} $target · ×$rounds',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                ]),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 26),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(appState.currentDhikr,
+                        style: TextStyle(color: pal.gold, fontSize: 15)),
+                    const SizedBox(height: 4),
+                    Text('$inRound',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 58,
+                            fontWeight: FontWeight.w300,
+                            height: 1.0)),
+                    const SizedBox(height: 2),
+                    Text('${tr('tasbih_target')} $target · ×$rounds',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ]),
+                ),
               ]),
             ),
           ),
@@ -2961,6 +3525,35 @@ class SettingsPage extends StatelessWidget {
                 ),
               ),
 
+              _section(context, tr('kerahat')),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: Text(tr('kerahat_hint'),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Card(
+                  child: Column(children: [
+                    SwitchListTile(
+                      value: appState.showKerahat,
+                      onChanged: appState.setShowKerahat,
+                      secondary: const Icon(Icons.do_not_disturb_on_outlined),
+                      title: Text(tr('kerahat_show')),
+                    ),
+                    if (appState.showKerahat) ...[
+                      const Divider(height: 1),
+                      _minutesRow(context, tr('k_israk'), appState.kerahatSunriseMin,
+                          (v) => appState.setKerahatMinutes(sunrise: v)),
+                      _minutesRow(context, tr('k_istiva'), appState.kerahatIstivaMin,
+                          (v) => appState.setKerahatMinutes(istiva: v)),
+                      _minutesRow(context, tr('k_isfirar'), appState.kerahatSunsetMin,
+                          (v) => appState.setKerahatMinutes(sunset: v)),
+                    ],
+                  ]),
+                ),
+              ),
+
               _section(context, tr('settings_offsets')),
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
@@ -3020,6 +3613,24 @@ class SettingsPage extends StatelessWidget {
       },
     );
   }
+
+  Widget _minutesRow(
+          BuildContext context, String label, int value, ValueChanged<int> onChanged) =>
+      ListTile(
+        dense: true,
+        title: Text(label),
+        subtitle: Text('$value ${tr('minutes')}'),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline),
+            onPressed: () => onChanged(value - 5),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: () => onChanged(value + 5),
+          ),
+        ]),
+      );
 
   Widget _section(BuildContext context, String title) => Padding(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
@@ -3485,6 +4096,356 @@ class _CustomTablePageState extends State<CustomTablePage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// Gebetskette: Perlen im Kreis, gefüllt bis zum aktuellen Stand,
+/// mit Imame (Kopfperle) und Quaste unten.
+class TasbihPainter extends CustomPainter {
+  final int beadCount, filled;
+  final Color gold, bead, accent, shadow;
+  TasbihPainter({
+    required this.beadCount,
+    required this.filled,
+    required this.gold,
+    required this.bead,
+    required this.accent,
+    required this.shadow,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2 - 14);
+    final radius = size.width / 2 - 26;
+    final count = beadCount < 1 ? 1 : beadCount;
+
+    // Perlen sitzen auf einem Bogen von 320 Grad, unten bleibt Platz für die Imame.
+    const sweep = 320.0;
+    const startDeg = -160.0;
+    final step = sweep / count;
+    final beadR = (2 * math.pi * radius * (sweep / 360) / count) / 2.4;
+
+    // Schnur
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      (startDeg - 90) * math.pi / 180,
+      sweep * math.pi / 180,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = gold.withValues(alpha: 0.35),
+    );
+
+    for (var i = 0; i < count; i++) {
+      final deg = startDeg + step * i + step / 2;
+      final rad = (deg - 90) * math.pi / 180;
+      final c = center + Offset(math.cos(rad), math.sin(rad)) * radius;
+      final isDone = i < filled;
+      final isNext = i == filled;
+
+      canvas.drawCircle(
+        c.translate(0, 2),
+        beadR,
+        Paint()
+          ..color = Colors.black.withValues(alpha: 0.30)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      );
+
+      canvas.drawCircle(
+        c,
+        beadR,
+        Paint()
+          ..shader = RadialGradient(
+            center: const Alignment(-0.4, -0.5),
+            colors: isDone
+                ? [Color.lerp(gold, Colors.white, 0.45)!, gold]
+                : [Color.lerp(bead, Colors.white, 0.18)!, shadow],
+          ).createShader(Rect.fromCircle(center: c, radius: beadR)),
+      );
+
+      canvas.drawCircle(
+        c,
+        beadR,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = isNext ? 1.8 : 0.8
+          ..color = isNext ? accent : gold.withValues(alpha: 0.45),
+      );
+
+      // Glanzpunkt
+      canvas.drawCircle(
+        c.translate(-beadR * 0.3, -beadR * 0.35),
+        beadR * 0.22,
+        Paint()..color = Colors.white.withValues(alpha: isDone ? 0.55 : 0.25),
+      );
+    }
+
+    // Imame unten
+    final imameTop = center + Offset(0, radius - beadR * 0.4);
+    final imameRect = Rect.fromCenter(
+      center: imameTop.translate(0, beadR * 1.5),
+      width: beadR * 1.7,
+      height: beadR * 3.4,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(imameRect, Radius.circular(beadR * 0.85)),
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.lerp(gold, Colors.white, 0.35)!, gold],
+        ).createShader(imameRect),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(imameRect, Radius.circular(beadR * 0.85)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = shadow.withValues(alpha: 0.5),
+    );
+
+    // Quaste
+    final tasselTop = imameRect.bottomCenter;
+    for (var i = -3; i <= 3; i++) {
+      canvas.drawLine(
+        tasselTop,
+        tasselTop.translate(i * 2.4, 22 - (i.abs() * 2.0)),
+        Paint()
+          ..color = gold.withValues(alpha: 0.75)
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant TasbihPainter old) =>
+      old.filled != filled || old.beadCount != beadCount || old.gold != gold;
+}
+
+// =============================================================================
+//  19. Moschee als Zeitquelle
+// =============================================================================
+
+/// Wird über den kleinen Knopf oben rechts im Zeiten-Reiter geöffnet.
+class MosqueSourcePage extends StatelessWidget {
+  const MosqueSourcePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final current = appState.refMosque;
+        final nearby = appState.visibleMosques;
+
+        return Scaffold(
+          appBar: AppBar(title: Text(tr('times_from'))),
+          body: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              if (current != null)
+                Card(
+                  child: Column(children: [
+                    ListTile(
+                      leading: Icon(Icons.mosque, color: pal.gold),
+                      title: Text(current.name,
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      subtitle: Text(current.address.isEmpty
+                          ? tr('mosque_active')
+                          : current.address),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.info_outline),
+                      title: Text(tr('mosque_info')),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => MosqueDetailPage(mosque: current))),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.location_off_outlined),
+                      title: Text(tr('clear_mosque')),
+                      onTap: () => appState.setReferenceMosque(null),
+                    ),
+                  ]),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(tr('mosque_times_explain'),
+                      style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
+                ),
+              const SizedBox(height: 20),
+              Text(tr('change_mosque'), style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              if (nearby.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(tr('mosques_none'), textAlign: TextAlign.center),
+                )
+              else
+                Card(
+                  child: Column(children: [
+                    for (var i = 0; i < nearby.length; i++) ...[
+                      if (i > 0) const Divider(height: 1),
+                      ListTile(
+                        leading: Icon(
+                          nearby[i].name == current?.name
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked,
+                          color: nearby[i].name == current?.name ? pal.gold : null,
+                        ),
+                        title: Text(nearby[i].name),
+                        subtitle: Text(
+                          '${distanceKm(appState.lat!, appState.lng!, nearby[i].lat, nearby[i].lng).toStringAsFixed(1)} ${tr('km')}',
+                        ),
+                        onTap: () {
+                          appState.setReferenceMosque(nearby[i]);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ]),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Alles zu einer einzelnen Moschee: Infos, Anrufen, Weg, Zeiten übernehmen.
+class MosqueDetailPage extends StatelessWidget {
+  final Mosque mosque;
+  const MosqueDetailPage({super.key, required this.mosque});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final isActive = appState.refMosque?.name == mosque.name;
+        final d = appState.lat == null
+            ? null
+            : distanceKm(appState.lat!, appState.lng!, mosque.lat, mosque.lng);
+
+        return Scaffold(
+          appBar: AppBar(title: Text(mosque.name, overflow: TextOverflow.ellipsis)),
+          body: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              if (isActive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: pal.gold.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.check_circle, size: 16, color: pal.gold),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(tr('mosque_active'),
+                          style: theme.textTheme.labelMedium?.copyWith(color: pal.gold)),
+                    ),
+                  ]),
+                ),
+              const SizedBox(height: 16),
+
+              // Schnellzugriff
+              Row(children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: mosque.phone == null
+                        ? null
+                        : () => launchUrl(Uri.parse('tel:${mosque.phone}')),
+                    icon: const Icon(Icons.call, size: 18),
+                    label: Text(tr('call')),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: () => launchUrl(
+                      Uri.parse(
+                          'https://www.google.com/maps/dir/?api=1&destination=${mosque.lat},${mosque.lng}'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    icon: const Icon(Icons.directions, size: 18),
+                    label: Text(tr('route')),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 20),
+
+              Card(
+                child: Column(children: [
+                  ListTile(
+                    leading: const Icon(Icons.place_outlined),
+                    title: Text(mosque.address.isEmpty ? tr('no_info') : mosque.address),
+                    subtitle: d == null ? null : Text('${d.toStringAsFixed(1)} ${tr('km')}'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.schedule_outlined),
+                    title: Text(tr('opening_hours')),
+                    subtitle: Text(mosque.openingHours ?? tr('no_info')),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.phone_outlined),
+                    title: Text(mosque.phone ?? tr('no_info')),
+                    onTap: mosque.phone == null
+                        ? null
+                        : () => launchUrl(Uri.parse('tel:${mosque.phone}')),
+                  ),
+                  if (mosque.website != null) ...[
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.language),
+                      title: Text(tr('website')),
+                      subtitle: Text(mosque.website!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      onTap: () => launchUrl(Uri.parse(mosque.website!),
+                          mode: LaunchMode.externalApplication),
+                    ),
+                  ],
+                ]),
+              ),
+              const SizedBox(height: 22),
+
+              FilledButton.icon(
+                onPressed: () {
+                  appState.setReferenceMosque(isActive ? null : mosque);
+                  if (!isActive) Navigator.pop(context);
+                },
+                icon: Icon(isActive ? Icons.link_off : Icons.link),
+                label: Text(isActive ? tr('clear_mosque') : tr('use_this_mosque')),
+              ),
+              const SizedBox(height: 12),
+              Text(tr('mosque_times_explain'),
+                  style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => const CustomTablePage())),
+                icon: const Icon(Icons.edit_note, size: 18),
+                label: Text(tr('enter_jamaat')),
+              ),
+              const SizedBox(height: 20),
+              Text(tr('mosques_source'),
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            ],
+          ),
+        );
+      },
     );
   }
 }
