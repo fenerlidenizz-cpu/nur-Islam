@@ -1,14 +1,13 @@
 // =============================================================================
-//  Nur Islam — main.dart  (Version 2)
-//  Kostenlos · werbefrei · offlinefaehig · DE / TR / EN
+//  Nur Islam — main.dart  (Version 3)
+//  Kostenlos · werbefrei · ohne Konto · offlinefähig · DE / TR / EN
 //
-//  Neu in dieser Fassung:
-//   - Behoben: Oberflaeche aktualisierte erst beim Reiterwechsel
-//   - Drei elegante Farbwelten statt Gruen (Indigo / Iznik / Aubergine)
-//   - Reiter "Moscheen" mit Umkreissuche (OpenStreetMap)
-//   - Standort manuell waehlbar: Ortssuche oder Koordinaten
-//   - Zeitquelle waehlbar: Berechnung / Online-Abgleich / eigene Tabelle
-//   - Diyanet-Monatstabelle einfuegbar (Copy & Paste, danach offline)
+//  Neu:
+//   - Diyanet-Temkin: Öğle +5, İkindi +4 (einfaches Schattenmaß), Güneş −5, Akşam +7
+//   - İmsak-/Yatsı-Winkel einstellbar + Kalibrierung nach eigener Referenz
+//   - Umlaute und türkische Sonderzeichen korrekt
+//   - Moscheen: nur sunnitische Gemeinden (abschaltbar)
+//   - Gebets-Tracker mit Häkchen, Serie und Freundesvergleich (rein lokal)
 // =============================================================================
 
 import 'dart:async';
@@ -22,6 +21,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+/// Link, den Freunde zum Installieren bekommen. Sobald die App im Play Store
+/// ist, hier die Store-Adresse eintragen.
+const String kAppShareUrl = 'https://github.com/';
 
 final AppState appState = AppState();
 
@@ -39,31 +42,24 @@ enum AppPalette { indigo, iznik, plum }
 
 class PaletteData {
   final String nameDe, nameTr, nameEn;
-  final Color deep; // Hintergrund
-  final Color surface; // Karten
-  final Color primary; // Verlauf / Akzentflaechen
-  final Color gold; // Linien, Schrift-Akzent
-  final Color accent; // sekundaerer Akzent
+  final Color deep, surface, primary, gold, accent;
   const PaletteData(this.nameDe, this.nameTr, this.nameEn, this.deep,
       this.surface, this.primary, this.gold, this.accent);
 }
 
 const Map<AppPalette, PaletteData> palettes = {
-  // Tiefes Nachtblau mit Gold — ruhig, hochwertig, sehr gut lesbar
   AppPalette.indigo: PaletteData(
     'Nacht-Indigo', 'Gece Lacivert', 'Midnight Indigo',
     Color(0xFF080F1F), Color(0xFF121C33), Color(0xFF1E3060),
     Color(0xFFD8B45A), Color(0xFF6E8CC7),
   ),
-  // Iznik-Tuerkis: die Farbwelt osmanischer Fliesen
   AppPalette.iznik: PaletteData(
-    'Iznik-Tuerkis', 'Iznik Turkuaz', 'Iznik Turquoise',
+    'İznik-Türkis', 'İznik Turkuaz', 'Iznik Turquoise',
     Color(0xFF06181C), Color(0xFF0D2A30), Color(0xFF11525C),
     Color(0xFFDCB863), Color(0xFF3FB3B8),
   ),
-  // Aubergine: warm, dunkel, ungewoehnlich
   AppPalette.plum: PaletteData(
-    'Aubergine', 'Patlican', 'Aubergine',
+    'Aubergine', 'Patlıcan', 'Aubergine',
     Color(0xFF130F1B), Color(0xFF211A2D), Color(0xFF3D2C52),
     Color(0xFFC9A227), Color(0xFF9B7BC4),
   ),
@@ -109,7 +105,7 @@ ThemeData buildTheme(Brightness b, AppPalette p) {
 }
 
 // =============================================================================
-//  2. Lokalisierung
+//  2. Sprachen
 // =============================================================================
 
 enum AppLang { de, tr, en }
@@ -117,180 +113,248 @@ enum AppLang { de, tr, en }
 const Map<String, List<String>> _strings = {
   'tab_times': ['Zeiten', 'Vakitler', 'Times'],
   'tab_mosques': ['Moscheen', 'Camiler', 'Mosques'],
-  'tab_qibla': ['Qibla', 'Kible', 'Qibla'],
+  'tab_qibla': ['Qibla', 'Kıble', 'Qibla'],
   'tab_tools': ['Tesbih', 'Tesbih', 'Tasbih'],
   'tab_more': ['Mehr', 'Daha', 'More'],
   'tab_qa': ['Frage & Antwort', 'Soru & Cevap', 'Q&A'],
   'tab_settings': ['Einstellungen', 'Ayarlar', 'Settings'],
 
-  'p_fajr': ['Fadschr', 'Imsak', 'Fajr'],
-  'p_sunrise': ['Sonnenaufgang', 'Gunes', 'Sunrise'],
-  'p_dhuhr': ['Dhuhr', 'Ogle', 'Dhuhr'],
-  'p_asr': ['Asr', 'Ikindi', 'Asr'],
-  'p_maghrib': ['Maghrib', 'Aksam', 'Maghrib'],
-  'p_isha': ['Ischa', 'Yatsi', 'Isha'],
+  'p_fajr': ['Fadschr', 'İmsak', 'Fajr'],
+  'p_sunrise': ['Sonnenaufgang', 'Güneş', 'Sunrise'],
+  'p_dhuhr': ['Dhuhr', 'Öğle', 'Dhuhr'],
+  'p_asr': ['Asr', 'İkindi', 'Asr'],
+  'p_maghrib': ['Maghrib', 'Akşam', 'Maghrib'],
+  'p_isha': ['Ischa', 'Yatsı', 'Isha'],
 
-  'next_prayer': ['Naechstes Gebet', 'Siradaki Vakit', 'Next Prayer'],
-  'remaining': ['verbleibend', 'kaldi', 'remaining'],
-  'motivation': ['Motivation des Tages', 'Gunun Motivasyonu', 'Daily Motivation'],
+  'next_prayer': ['Nächstes Gebet', 'Sıradaki Vakit', 'Next Prayer'],
+  'remaining': ['verbleibend', 'kaldı', 'remaining'],
+  'motivation': ['Motivation des Tages', 'Günün Motivasyonu', 'Daily Motivation'],
 
   'location': ['Standort', 'Konum', 'Location'],
-  'location_loading': ['Standort wird ermittelt ...', 'Konum aliniyor ...', 'Getting location ...'],
+  'location_loading': ['Standort wird ermittelt …', 'Konum alınıyor …', 'Getting location …'],
   'location_needed': [
-    'Fuer Gebetszeiten und Qibla wird ein Standort benoetigt.',
-    'Namaz vakitleri ve kible icin konum gerekli.',
+    'Für Gebetszeiten und Qibla wird ein Standort benötigt.',
+    'Namaz vakitleri ve kıble için konum gerekli.',
     'Prayer times and qibla need a location.',
   ],
   'location_denied': [
-    'Standortfreigabe abgelehnt. Du kannst den Ort auch von Hand waehlen.',
-    'Konum izni reddedildi. Konumu elle de secebilirsin.',
+    'Standortfreigabe abgelehnt. Du kannst den Ort auch von Hand wählen.',
+    'Konum izni reddedildi. Konumu elle de seçebilirsin.',
     'Location denied. You can also choose a place manually.',
   ],
   'location_denied_forever': [
-    'Standortzugriff blockiert. Aktiviere ihn in den Systemeinstellungen oder waehle den Ort von Hand.',
-    'Konum izni engellendi. Sistem ayarlarindan ac veya konumu elle sec.',
+    'Standortzugriff blockiert. Aktiviere ihn in den Systemeinstellungen oder wähle den Ort von Hand.',
+    'Konum izni engellendi. Sistem ayarlarından aç veya konumu elle seç.',
     'Location blocked. Enable it in system settings or choose a place manually.',
   ],
-  'location_service_off': ['Ortungsdienste sind ausgeschaltet.', 'Konum servisleri kapali.', 'Location services are off.'],
+  'location_service_off': ['Ortungsdienste sind ausgeschaltet.', 'Konum servisleri kapalı.', 'Location services are off.'],
   'allow_location': ['Standort freigeben', 'Konuma izin ver', 'Allow location'],
-  'open_settings': ['Einstellungen oeffnen', 'Ayarlari ac', 'Open settings'],
-  'refresh_location': ['Standort aktualisieren', 'Konumu guncelle', 'Refresh location'],
-  'choose_manually': ['Ort selbst waehlen', 'Konumu kendim sec', 'Choose place manually'],
+  'open_settings': ['Einstellungen öffnen', 'Ayarları aç', 'Open settings'],
+  'refresh_location': ['Standort aktualisieren', 'Konumu güncelle', 'Refresh location'],
+  'choose_manually': ['Ort selbst wählen', 'Konumu kendim seç', 'Choose place manually'],
   'retry': ['Erneut versuchen', 'Tekrar dene', 'Try again'],
-
-  'loc_mode': ['Standortquelle', 'Konum kaynagi', 'Location source'],
   'loc_auto': ['Automatisch (GPS)', 'Otomatik (GPS)', 'Automatic (GPS)'],
-  'loc_manual': ['Selbst gewaehlt', 'Elle secilmis', 'Chosen manually'],
+  'loc_manual': ['Selbst gewählt', 'Elle seçilmiş', 'Chosen manually'],
   'search_place': ['Ort suchen', 'Yer ara', 'Search place'],
-  'search_hint': ['z. B. Koeln Ehrenfeld', 'orn. Koln Ehrenfeld', 'e.g. Cologne Ehrenfeld'],
-  'searching': ['Wird gesucht ...', 'Araniyor ...', 'Searching ...'],
-  'no_results': ['Nichts gefunden.', 'Sonuc yok.', 'Nothing found.'],
-  'coords_manual': ['Koordinaten von Hand', 'Koordinatlari elle gir', 'Coordinates by hand'],
+  'search_hint': ['z. B. Köln Ehrenfeld', 'örn. Köln Ehrenfeld', 'e.g. Cologne Ehrenfeld'],
+  'searching': ['Wird gesucht …', 'Aranıyor …', 'Searching …'],
+  'no_results': ['Nichts gefunden.', 'Sonuç yok.', 'Nothing found.'],
+  'coords_manual': ['Koordinaten von Hand', 'Koordinatları elle gir', 'Coordinates by hand'],
   'latitude': ['Breitengrad', 'Enlem', 'Latitude'],
-  'longitude': ['Laengengrad', 'Boylam', 'Longitude'],
-  'apply': ['Uebernehmen', 'Uygula', 'Apply'],
-  'open_in_maps': ['In Karten oeffnen', 'Haritada ac', 'Open in maps'],
+  'longitude': ['Längengrad', 'Boylam', 'Longitude'],
+  'apply': ['Übernehmen', 'Uygula', 'Apply'],
+  'open_in_maps': ['In Karten öffnen', 'Haritada aç', 'Open in maps'],
+  'maps_tip': [
+    'Tipp: In Google Maps lange auf eine Stelle tippen, die Koordinaten kopieren und hier einfügen.',
+    'İpucu: Google Haritalar\'da bir noktaya uzun bas, koordinatları kopyalayıp buraya yapıştır.',
+    'Tip: In Google Maps long-press a spot, copy the coordinates and paste them here.',
+  ],
 
-  // Qibla
-  'qibla_title': ['Qibla-Richtung', 'Kible Yonu', 'Qibla Direction'],
-  'qibla_aligned': ['Ausgerichtet zur Kaaba', 'Kabe\'ye yonelik', 'Aligned with the Kaaba'],
-  'qibla_turn_left': ['Nach links drehen', 'Sola cevir', 'Turn left'],
-  'qibla_turn_right': ['Nach rechts drehen', 'Saga cevir', 'Turn right'],
-  'qibla_distance': ['Entfernung zur Kaaba', 'Kabe\'ye uzaklik', 'Distance to the Kaaba'],
+  'qibla_title': ['Qibla-Richtung', 'Kıble Yönü', 'Qibla Direction'],
+  'qibla_aligned': ['Ausgerichtet zur Kaaba', 'Kâbe\'ye yönelik', 'Aligned with the Kaaba'],
+  'qibla_turn_left': ['Nach links drehen', 'Sola çevir', 'Turn left'],
+  'qibla_turn_right': ['Nach rechts drehen', 'Sağa çevir', 'Turn right'],
+  'qibla_distance': ['Entfernung zur Kaaba', 'Kâbe\'ye uzaklık', 'Distance to the Kaaba'],
   'qibla_hint': [
-    'Halte das Geraet flach. Bewege es in einer Acht, falls die Nadel springt.',
-    'Cihazi duz tut. Igne oynuyorsa cihazi sekiz cizerek hareket ettir.',
+    'Halte das Gerät flach. Bewege es in einer Acht, falls die Nadel springt.',
+    'Cihazı düz tut. İğne oynuyorsa cihazı sekiz çizerek hareket ettir.',
     'Hold the device flat. Move it in a figure eight if the needle jumps.',
   ],
-  'no_compass': ['Kein Magnetsensor vorhanden — nur Gradanzeige.', 'Manyetik sensor yok — sadece derece.', 'No magnetometer — degrees only.'],
-  'calibrate_needed': ['Kompass ungenau — bitte kalibrieren.', 'Pusula hassas degil — kalibre et.', 'Compass inaccurate — please calibrate.'],
+  'no_compass': ['Kein Magnetsensor vorhanden — nur Gradanzeige.', 'Manyetik sensör yok — sadece derece.', 'No magnetometer — degrees only.'],
+  'calibrate_needed': ['Kompass ungenau — bitte kalibrieren.', 'Pusula hassas değil — kalibre et.', 'Compass inaccurate — please calibrate.'],
 
-  // Moscheen
-  'mosques_title': ['Moscheen in der Naehe', 'Yakindaki camiler', 'Mosques nearby'],
-  'mosques_loading': ['Moscheen werden gesucht ...', 'Camiler araniyor ...', 'Searching mosques ...'],
+  'mosques_title': ['Moscheen in der Nähe', 'Yakındaki camiler', 'Mosques nearby'],
+  'mosques_loading': ['Moscheen werden gesucht …', 'Camiler aranıyor …', 'Searching mosques …'],
   'mosques_none': [
-    'Im gewaehlten Umkreis wurde nichts gefunden. Versuch einen groesseren Radius.',
-    'Secilen yaricapta bir sey bulunamadi. Daha genis bir yaricap dene.',
+    'Im gewählten Umkreis wurde nichts gefunden. Versuch einen größeren Radius.',
+    'Seçilen yarıçapta bir şey bulunamadı. Daha geniş bir yarıçap dene.',
     'Nothing found in this radius. Try a larger one.',
   ],
   'mosques_offline': [
-    'Fuer die Suche wird einmalig eine Internetverbindung benoetigt. Gefundene Moscheen bleiben gespeichert.',
-    'Arama icin bir kez internet gerekir. Bulunan camiler kaydedilir.',
+    'Für die Suche wird einmalig eine Internetverbindung benötigt. Gefundene Moscheen bleiben gespeichert.',
+    'Arama için bir kez internet gerekir. Bulunan camiler kaydedilir.',
     'The search needs an internet connection once. Found mosques stay saved.',
   ],
   'mosques_source': [
     'Daten: OpenStreetMap-Mitwirkende (ODbL)',
-    'Veri: OpenStreetMap katkida bulunanlar (ODbL)',
+    'Veri: OpenStreetMap katkıda bulunanlar (ODbL)',
     'Data: OpenStreetMap contributors (ODbL)',
   ],
   'mosques_times_note': [
-    'Eigene Gebetszeiten einer Moschee stellt die App noch nicht dar — dafuer braucht es eine Freigabe der jeweiligen Gemeinde.',
-    'Bir caminin kendi vakitleri henuz gosterilmiyor — bunun icin cemaatin izni gerekir.',
-    'A mosque\'s own timetable is not shown yet — that needs the congregation\'s consent.',
+    'Eigene Gebetszeiten einer Gemeinde zeigt die App nicht — dafür braucht es die Freigabe der jeweiligen Moschee.',
+    'Bir cemaatin kendi vakitleri gösterilmiyor — bunun için caminin izni gerekir.',
+    'A congregation\'s own timetable is not shown — that needs the mosque\'s consent.',
   ],
-  'radius': ['Umkreis', 'Yaricap', 'Radius'],
+  'only_sunni': ['Nur sunnitische Gemeinden', 'Sadece Sünni cemaatler', 'Sunni congregations only'],
+  'only_sunni_hint': [
+    'Blendet Einträge aus, die in OpenStreetMap einer anderen Ausrichtung zugeordnet sind. '
+        'Die Angaben stammen von OpenStreetMap und können unvollständig sein.',
+    'OpenStreetMap\'te başka bir mezhebe atanmış kayıtları gizler. Bilgiler OpenStreetMap\'ten gelir ve eksik olabilir.',
+    'Hides entries assigned to a different denomination in OpenStreetMap. The data comes from OpenStreetMap and may be incomplete.',
+  ],
+  'radius': ['Umkreis', 'Yarıçap', 'Radius'],
   'search_again': ['Neu suchen', 'Yeniden ara', 'Search again'],
-  'set_reference': ['Als meine Moschee', 'Camim olarak sec', 'Set as my mosque'],
+  'set_reference': ['Als meine Moschee', 'Camim olarak seç', 'Set as my mosque'],
   'my_mosque': ['Meine Moschee', 'Camim', 'My mosque'],
 
-  // Zeitquelle
-  'time_source': ['Zeitquelle', 'Vakit kaynagi', 'Time source'],
-  'src_calc': ['Berechnung auf dem Geraet', 'Cihazda hesaplama', 'Calculated on device'],
-  'src_calc_sub': ['Diyanet-Methode 18 / 17 Grad, funktioniert offline', 'Diyanet yontemi 18 / 17 derece, cevrimdisi calisir', 'Diyanet method 18 / 17 degrees, works offline'],
-  'src_online': ['Online-Abgleich', 'Cevrimici esitleme', 'Online sync'],
-  'src_online_sub': ['Laedt den Monatskalender und speichert ihn offline', 'Aylik takvimi indirir ve cevrimdisi saklar', 'Downloads the monthly calendar and stores it offline'],
+  'time_source': ['Zeitquelle', 'Vakit kaynağı', 'Time source'],
+  'src_calc': ['Berechnung auf dem Gerät', 'Cihazda hesaplama', 'Calculated on device'],
+  'src_calc_sub': ['Diyanet-Methode mit Temkin, funktioniert offline', 'Temkinli Diyanet yöntemi, çevrimdışı çalışır', 'Diyanet method with temkin, works offline'],
+  'src_online': ['Online-Abgleich', 'Çevrimiçi eşitleme', 'Online sync'],
+  'src_online_sub': ['Lädt den Monatskalender und speichert ihn offline', 'Aylık takvimi indirir ve çevrimdışı saklar', 'Downloads the monthly calendar and stores it offline'],
   'src_custom': ['Eigene Tabelle', 'Kendi tablom', 'My own table'],
-  'src_custom_sub': ['Zeiten selbst einfuegen — hat immer Vorrang', 'Vakitleri kendin gir — her zaman oncelikli', 'Enter times yourself — always takes priority'],
-  'custom_table': ['Eigene Zeiten einfuegen', 'Kendi vakitlerini gir', 'Paste your own times'],
+  'src_custom_sub': ['Zeiten selbst einfügen — hat immer Vorrang', 'Vakitleri kendin gir — her zaman öncelikli', 'Enter times yourself — always takes priority'],
+  'custom_table': ['Eigene Zeiten einfügen', 'Kendi vakitlerini gir', 'Paste your own times'],
   'custom_paste_hint': [
-    'Kopiere die Monatstabelle deiner Quelle und fuege sie hier ein. Erkannt wird jede Zeile, '
-        'die einen Tag und sechs Uhrzeiten enthaelt — in der Reihenfolge Imsak, Sonnenaufgang, '
-        'Mittag, Nachmittag, Abend, Nacht.',
-    'Kaynagindaki aylik tabloyu kopyalayip buraya yapistir. Bir gun ve alti saat iceren her satir taninir — '
-        'sira: Imsak, Gunes, Ogle, Ikindi, Aksam, Yatsi.',
+    'Kopiere die Monatstabelle deiner Quelle und füge sie hier ein. Erkannt wird jede Zeile mit '
+        'einem Tag und sechs Uhrzeiten — in der Reihenfolge İmsak, Sonnenaufgang, Mittag, '
+        'Nachmittag, Abend, Nacht.',
+    'Kaynağındaki aylık tabloyu kopyalayıp buraya yapıştır. Bir gün ve altı saat içeren her satır tanınır — '
+        'sıra: İmsak, Güneş, Öğle, İkindi, Akşam, Yatsı.',
     'Copy the monthly table from your source and paste it here. Any line with a day and six times is '
-        'recognised — in the order Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha.',
+        'recognised — order: Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha.',
   ],
   'month': ['Monat', 'Ay', 'Month'],
-  'year': ['Jahr', 'Yil', 'Year'],
-  'parsed_days': ['Erkannte Tage', 'Taninan gun', 'Days recognised'],
+  'year': ['Jahr', 'Yıl', 'Year'],
+  'parsed_days': ['Erkannte Tage', 'Tanınan gün', 'Days recognised'],
   'save': ['Speichern', 'Kaydet', 'Save'],
   'saved': ['Gespeichert', 'Kaydedildi', 'Saved'],
-  'nothing_parsed': ['Keine Zeile erkannt. Stimmt das Format?', 'Satir taninmadi. Bicim dogru mu?', 'No line recognised. Is the format right?'],
-  'stored_days': ['Gespeicherte Tage', 'Kayitli gun', 'Stored days'],
-  'clear_table': ['Tabelle loeschen', 'Tabloyu sil', 'Delete table'],
-  'sync_now': ['Jetzt abgleichen', 'Simdi esitle', 'Sync now'],
-  'sync_ok': ['Abgleich abgeschlossen', 'Esitleme tamamlandi', 'Sync complete'],
-  'sync_failed': ['Abgleich fehlgeschlagen — Berechnung bleibt aktiv.', 'Esitleme basarisiz — hesaplama gecerli.', 'Sync failed — calculation stays active.'],
-  'last_sync': ['Letzter Abgleich', 'Son esitleme', 'Last sync'],
-  'never': ['Nie', 'Hic', 'Never'],
-  'source_local': ['Auf dem Geraet berechnet', 'Cihazda hesaplandi', 'Calculated on device'],
-  'source_synced': ['Abgeglichen · offline gespeichert', 'Esitlendi · cevrimdisi kayitli', 'Synced · stored offline'],
+  'nothing_parsed': ['Keine Zeile erkannt. Stimmt das Format?', 'Satır tanınmadı. Biçim doğru mu?', 'No line recognised. Is the format right?'],
+  'stored_days': ['Gespeicherte Tage', 'Kayıtlı gün', 'Stored days'],
+  'clear_table': ['Tabelle löschen', 'Tabloyu sil', 'Delete table'],
+  'sync_now': ['Jetzt abgleichen', 'Şimdi eşitle', 'Sync now'],
+  'sync_ok': ['Abgleich abgeschlossen', 'Eşitleme tamamlandı', 'Sync complete'],
+  'sync_failed': ['Abgleich fehlgeschlagen — Berechnung bleibt aktiv.', 'Eşitleme başarısız — hesaplama geçerli.', 'Sync failed — calculation stays active.'],
+  'last_sync': ['Letzter Abgleich', 'Son eşitleme', 'Last sync'],
+  'never': ['Nie', 'Hiç', 'Never'],
+  'source_local': ['Auf dem Gerät berechnet', 'Cihazda hesaplandı', 'Calculated on device'],
+  'source_synced': ['Abgeglichen · offline gespeichert', 'Eşitlendi · çevrimdışı kayıtlı', 'Synced · stored offline'],
   'source_custom': ['Eigene Tabelle', 'Kendi tablom', 'My own table'],
 
-  // Q&A
-  'coming_soon': ['Kommt bald', 'Yakinda', 'Coming soon'],
+  // Feineinstellung der Winkel
+  'angles': ['Dämmerungswinkel', 'Şafak açıları', 'Twilight angles'],
+  'angles_hint': [
+    'Diyanet rechnet İmsak mit 18° und Yatsı mit 17°. Manche Kalender verwenden für Mitteleuropa '
+        'kleinere Werte. Wenn deine Referenz abweicht, kalibriere unten.',
+    'Diyanet İmsak için 18°, Yatsı için 17° kullanır. Bazı takvimler Orta Avrupa için daha küçük '
+        'değerler alır. Referansın farklıysa aşağıdan kalibre et.',
+    'Diyanet uses 18° for Fajr and 17° for Isha. Some calendars use smaller values for central '
+        'Europe. If your reference differs, calibrate below.',
+  ],
+  'fajr_angle': ['İmsak-Winkel', 'İmsak açısı', 'Fajr angle'],
+  'isha_angle': ['Yatsı-Winkel', 'Yatsı açısı', 'Isha angle'],
+  'calibrate': ['Nach Referenz kalibrieren', 'Referansa göre kalibre et', 'Calibrate to reference'],
+  'calibrate_hint': [
+    'Trag die heutigen Zeiten deiner Referenz ein. Die App rechnet daraus den passenden Winkel '
+        'aus und nutzt ihn für jeden weiteren Tag.',
+    'Referansındaki bugünkü vakitleri gir. Uygulama uygun açıyı hesaplar ve her gün için kullanır.',
+    'Enter today\'s times from your reference. The app derives the matching angle and uses it every day.',
+  ],
+  'calibrated': ['Kalibriert', 'Kalibre edildi', 'Calibrated'],
+  'calibrate_failed': ['Zeit passt nicht zu diesem Standort.', 'Bu konuma uymuyor.', 'That time does not fit this location.'],
+  'temkin': ['Temkin nach Diyanet', 'Diyanet temkini', 'Diyanet temkin'],
+  'temkin_hint': [
+    'Öğle +5, İkindi +4, Sonnenaufgang −5, Akşam +7 Minuten.',
+    'Öğle +5, İkindi +4, Güneş −5, Akşam +7 dakika.',
+    'Dhuhr +5, Asr +4, sunrise −5, Maghrib +7 minutes.',
+  ],
+  'asr_method': ['İkindi-Methode', 'İkindi yöntemi', 'Asr method'],
+  'asr_first': ['Einfaches Schattenmaß (Diyanet)', 'Asr-ı evvel (Diyanet)', 'Single shadow (Diyanet)'],
+  'asr_second': ['Doppeltes Schattenmaß (hanefitisch)', 'Asr-ı sânî (Hanefî)', 'Double shadow (Hanafi)'],
+
+  'coming_soon': ['Kommt bald', 'Yakında', 'Coming soon'],
   'qa_locked_body': [
-    'Frage & Antwort sowie Ayet- und Hadith-Inhalte werden vorbereitet und vor der Veroeffentlichung '
-        'auf ihre Quellen geprueft. Sie folgen in einem der naechsten Updates.',
-    'Soru & Cevap ile ayet ve hadis icerikleri hazirlaniyor ve yayindan once kaynaklari kontrol ediliyor. '
-        'Yakin bir guncellemede eklenecek.',
-    'Q&A along with Qur\'an and hadith content is being prepared, with sources verified before release. '
-        'It follows in one of the next updates.',
+    'Frage & Antwort sowie Ayet- und Hadith-Inhalte werden vorbereitet und vor der Veröffentlichung '
+        'auf ihre Quellen geprüft. Sie folgen in einem der nächsten Updates.',
+    'Soru & Cevap ile ayet ve hadis içerikleri hazırlanıyor ve yayından önce kaynakları kontrol ediliyor.',
+    'Q&A along with Qur\'an and hadith content is being prepared, with sources verified before release.',
   ],
 
-  // Tesbih
   'tasbih_title': ['Tesbih', 'Tesbih', 'Tasbih'],
   'tasbih_target': ['Ziel', 'Hedef', 'Target'],
-  'tasbih_reset': ['Zuruecksetzen', 'Sifirla', 'Reset'],
-  'tasbih_tap': ['Zum Zaehlen tippen', 'Saymak icin dokun', 'Tap to count'],
+  'tasbih_reset': ['Zurücksetzen', 'Sıfırla', 'Reset'],
+  'tasbih_tap': ['Zum Zählen tippen', 'Saymak için dokun', 'Tap to count'],
 
-  // Einstellungen
+  // Tracker & Freunde
+  'tracker': ['Gebete festhalten', 'Namaz takibi', 'Prayer tracker'],
+  'tracker_today': ['Heute gebetet', 'Bugün kılınan', 'Prayed today'],
+  'streak': ['Serie', 'Seri', 'Streak'],
+  'days': ['Tage', 'gün', 'days'],
+  'week': ['Letzte 7 Tage', 'Son 7 gün', 'Last 7 days'],
+  'friends': ['Freunde', 'Arkadaşlar', 'Friends'],
+  'friends_none': [
+    'Noch keine Freunde hinzugefügt. Lade jemanden ein und tauscht euren Stand aus.',
+    'Henüz arkadaş yok. Birini davet et ve durumunuzu paylaşın.',
+    'No friends yet. Invite someone and exchange your progress.',
+  ],
+  'invite_friend': ['Freund einladen', 'Arkadaş davet et', 'Invite a friend'],
+  'share_progress': ['Meinen Stand teilen', 'Durumumu paylaş', 'Share my progress'],
+  'add_friend': ['Stand eines Freundes einfügen', 'Arkadaşın durumunu ekle', 'Paste a friend\'s progress'],
+  'paste_code_hint': [
+    'Füge hier den Code ein, den dein Freund dir geschickt hat.',
+    'Arkadaşının gönderdiği kodu buraya yapıştır.',
+    'Paste the code your friend sent you here.',
+  ],
+  'copied': ['In die Zwischenablage kopiert', 'Panoya kopyalandı', 'Copied to clipboard'],
+  'code_invalid': ['Der Code konnte nicht gelesen werden.', 'Kod okunamadı.', 'The code could not be read.'],
+  'your_name': ['Dein Name', 'Adın', 'Your name'],
+  'name_hint': ['Wird nur in dem Code angezeigt, den du teilst.', 'Sadece paylaştığın kodda görünür.', 'Only shown in the code you share.'],
+  'remove': ['Entfernen', 'Kaldır', 'Remove'],
+  'me': ['Ich', 'Ben', 'Me'],
+  'no_server_note': [
+    'Alles bleibt auf deinem Gerät. Es gibt kein Konto und keinen Server — der Vergleich '
+        'entsteht nur aus den Codes, die ihr euch gegenseitig schickt.',
+    'Her şey cihazında kalır. Hesap ve sunucu yok — karşılaştırma sadece birbirinize '
+        'gönderdiğiniz kodlardan oluşur.',
+    'Everything stays on your device. There is no account and no server — the comparison is '
+        'built only from the codes you send each other.',
+  ],
+
   'settings_language': ['Sprache', 'Dil', 'Language'],
-  'settings_appearance': ['Darstellung', 'Gorunum', 'Appearance'],
-  'settings_palette': ['Farbwelt', 'Renk dunyasi', 'Colour theme'],
+  'settings_appearance': ['Darstellung', 'Görünüm', 'Appearance'],
+  'settings_palette': ['Farbwelt', 'Renk dünyası', 'Colour theme'],
   'theme_system': ['System', 'Sistem', 'System'],
-  'theme_light': ['Hell', 'Acik', 'Light'],
+  'theme_light': ['Hell', 'Açık', 'Light'],
   'theme_dark': ['Dunkel', 'Koyu', 'Dark'],
   'settings_calculation': ['Berechnung', 'Hesaplama', 'Calculation'],
-  'settings_madhab': ['Asr-Berechnung', 'Ikindi hesabi', 'Asr calculation'],
-  'madhab_hanafi': ['Hanefi', 'Hanefi', 'Hanafi'],
-  'madhab_shafii': ['Safii / Maliki', 'Safii / Maliki', 'Shafi\'i / Maliki'],
-  'settings_offsets': ['Feinjustierung (+/- Minuten)', 'Ince ayar (+/- dakika)', 'Fine tuning (+/- minutes)'],
+  'settings_offsets': ['Feinjustierung (± Minuten)', 'İnce ayar (± dakika)', 'Fine tuning (± minutes)'],
   'settings_offsets_hint': [
     'Nur nutzen, wenn deine Moschee bewusst abweichende Zeiten ansagt.',
-    'Sadece camin farkli vakit okuyorsa kullan.',
+    'Sadece camin farklı vakit okuyorsa kullan.',
     'Only use this if your mosque announces different times on purpose.',
   ],
-  'settings_time_format': ['24-Stunden-Format', '24 saat bicimi', '24-hour format'],
-  'settings_about': ['Ueber die App', 'Uygulama hakkinda', 'About'],
+  'settings_time_format': ['24-Stunden-Format', '24 saat biçimi', '24-hour format'],
+  'settings_about': ['Über uns', 'Hakkımızda', 'About us'],
   'about_body': [
-    'Nur Islam ist dauerhaft kostenlos, ohne Werbung und ohne Tracking. Gebetszeiten und Qibla '
-        'werden auf dem Geraet berechnet und funktionieren ohne Internet.',
-    'Nur Islam kalici olarak ucretsizdir, reklam ve takip icermez. Vakitler ve kible cihazda '
-        'hesaplanir, internet olmadan calisir.',
-    'Nur Islam is permanently free, with no ads and no tracking. Prayer times and qibla are '
-        'calculated on the device and work without internet.',
+    'Einfach nur ein Akh, der zusammen mit Claude versucht, die Welt ein kleines bisschen besser '
+        'zu machen. Nur Islam ist und bleibt kostenlos, ohne Werbung, ohne Konto und ohne '
+        'Datensammeln. Alles, was du hier eingibst, bleibt auf deinem Gerät.',
+    'Sadece dünyayı biraz daha güzel yapmak isteyen bir kardeşiniz — Claude ile birlikte. '
+        'Nur Islam ücretsizdir ve öyle kalacak: reklamsız, hesapsız, veri toplamadan. '
+        'Girdiğin her şey cihazında kalır.',
+    'Just an akh trying, together with Claude, to make the world a little better. Nur Islam is '
+        'and stays free — no ads, no account, no data collection. Everything you enter stays on '
+        'your device.',
   ],
   'km': ['km', 'km', 'km'],
 };
@@ -302,13 +366,19 @@ String tr(String key) {
 
 const Map<AppLang, List<String>> _weekdays = {
   AppLang.de: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'],
-  AppLang.tr: ['Pazartesi', 'Sali', 'Carsamba', 'Persembe', 'Cuma', 'Cumartesi', 'Pazar'],
+  AppLang.tr: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
   AppLang.en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
 };
 
+const Map<AppLang, List<String>> _weekdaysShort = {
+  AppLang.de: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
+  AppLang.tr: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
+  AppLang.en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+};
+
 const Map<AppLang, List<String>> _months = {
-  AppLang.de: ['Januar', 'Februar', 'Maerz', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
-  AppLang.tr: ['Ocak', 'Subat', 'Mart', 'Nisan', 'Mayis', 'Haziran', 'Temmuz', 'Agustos', 'Eylul', 'Ekim', 'Kasim', 'Aralik'],
+  AppLang.de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+  AppLang.tr: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
   AppLang.en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 };
 
@@ -329,22 +399,22 @@ String longDate(DateTime d) {
 
 const Map<AppLang, List<String>> _motivations = {
   AppLang.de: [
-    'Ein kurzes Gebet zur rechten Zeit traegt weiter als ein langes zur falschen.',
-    'Beginne klein und bleibe dabei — Bestaendigkeit schlaegt Begeisterung.',
+    'Ein kurzes Gebet zur rechten Zeit trägt weiter als ein langes zur falschen.',
+    'Beginne klein und bleibe dabei — Beständigkeit schlägt Begeisterung.',
     'Dankbarkeit macht wenig zu viel.',
     'Wer seine Zeit nach dem Gebet ordnet, ordnet seinen ganzen Tag.',
-    'Geduld ist keine Untaetigkeit, sondern ruhiges Vertrauen.',
-    'Ein freundliches Wort ist die kleinste Sadaqa und wirkt am laengsten.',
-    'Nimm dir heute einen Moment der Stille, bevor der Laerm beginnt.',
+    'Geduld ist keine Untätigkeit, sondern ruhiges Vertrauen.',
+    'Ein freundliches Wort ist die kleinste Sadaqa und wirkt am längsten.',
+    'Nimm dir heute einen Moment der Stille, bevor der Lärm beginnt.',
   ],
   AppLang.tr: [
-    'Vaktinde kilinan kisa bir namaz, gec kalmis uzun bir namazdan hayirlidir.',
-    'Kucuk basla ve devam et — sureklilik heyecandan gucludur.',
-    'Sukur, azi cok yapar.',
-    'Vaktini namaza gore duzenleyen, gununu de duzenler.',
-    'Sabir tembellik degil, sakin bir guvendir.',
-    'Guzel bir soz en kucuk sadakadir ve en uzun kalir.',
-    'Gurultu baslamadan once bugun kendine bir sessizlik ani ayir.',
+    'Vaktinde kılınan kısa bir namaz, geç kalmış uzun bir namazdan hayırlıdır.',
+    'Küçük başla ve devam et — süreklilik heyecandan güçlüdür.',
+    'Şükür, azı çok yapar.',
+    'Vaktini namaza göre düzenleyen, gününü de düzenler.',
+    'Sabır tembellik değil, sakin bir güvendir.',
+    'Güzel bir söz en küçük sadakadır ve en uzun kalır.',
+    'Gürültü başlamadan önce bugün kendine bir sessizlik anı ayır.',
   ],
   AppLang.en: [
     'A short prayer on time carries further than a long one too late.',
@@ -370,6 +440,7 @@ enum P { fajr, sunrise, dhuhr, asr, maghrib, isha }
 
 extension PLabel on P {
   String get label => tr('p_$name');
+  bool get isPrayer => this != P.sunrise;
   IconData get icon => switch (this) {
         P.fajr => Icons.nightlight_round,
         P.sunrise => Icons.wb_twilight,
@@ -379,6 +450,8 @@ extension PLabel on P {
         P.isha => Icons.dark_mode_outlined,
       };
 }
+
+const List<P> kPrayers = [P.fajr, P.dhuhr, P.asr, P.maghrib, P.isha];
 
 enum TimeSource { calculated, online, custom }
 
@@ -390,17 +463,23 @@ class DayTimes {
   final TimeSource source;
   const DayTimes({required this.date, required this.times, required this.source});
   DateTime? operator [](P p) => times[p];
-  List<P> get prayersOnly => const [P.fajr, P.dhuhr, P.asr, P.maghrib, P.isha];
 }
 
 class Mosque {
   final String name;
   final double lat, lng;
-  final String? street, city;
-  const Mosque({required this.name, required this.lat, required this.lng, this.street, this.city});
+  final String? street, city, denomination;
+  const Mosque({
+    required this.name,
+    required this.lat,
+    required this.lng,
+    this.street,
+    this.city,
+    this.denomination,
+  });
 
   Map<String, dynamic> toJson() =>
-      {'n': name, 'la': lat, 'lo': lng, 's': street, 'c': city};
+      {'n': name, 'la': lat, 'lo': lng, 's': street, 'c': city, 'd': denomination};
 
   factory Mosque.fromJson(Map<String, dynamic> j) => Mosque(
         name: j['n'] as String,
@@ -408,11 +487,29 @@ class Mosque {
         lng: (j['lo'] as num).toDouble(),
         street: j['s'] as String?,
         city: j['c'] as String?,
+        denomination: j['d'] as String?,
+      );
+}
+
+class Friend {
+  final String name;
+  /// Schlüssel: Tagesdatum, Wert: Anzahl verrichteter Gebete (0–5)
+  final Map<String, int> days;
+  final DateTime updated;
+  const Friend({required this.name, required this.days, required this.updated});
+
+  Map<String, dynamic> toJson() =>
+      {'n': name, 'd': days, 'u': updated.millisecondsSinceEpoch};
+
+  factory Friend.fromJson(Map<String, dynamic> j) => Friend(
+        name: j['n'] as String,
+        days: (j['d'] as Map).map((k, v) => MapEntry(k as String, (v as num).toInt())),
+        updated: DateTime.fromMillisecondsSinceEpoch((j['u'] as num).toInt()),
       );
 }
 
 // =============================================================================
-//  4. Gebetszeiten-Berechnung (offline, Diyanet-Winkel 18 / 17 Grad)
+//  4. Berechnung nach Diyanet-Methode
 // =============================================================================
 
 double _dsin(double d) => math.sin(d * math.pi / 180);
@@ -439,11 +536,15 @@ class _SunPos {
 }
 
 class PrayerCalculator {
-  static const double fajrAngle = 18.0;
-  static const double ishaAngle = 17.0;
   static const double sunriseAngle = 0.833;
 
-  static double _julianDay(int year, int month, int day) {
+  // Temkin nach Diyanet (Minuten)
+  static const int temkinSunrise = -5;
+  static const int temkinDhuhr = 5;
+  static const int temkinAsr = 4;
+  static const int temkinMaghrib = 7;
+
+  static double julianDay(int year, int month, int day) {
     if (month <= 2) {
       year -= 1;
       month += 12;
@@ -455,7 +556,7 @@ class PrayerCalculator {
         day + b - 1524.5;
   }
 
-  static _SunPos _sunPosition(double jd) {
+  static _SunPos sunPosition(double jd) {
     final d = jd - 2451545.0;
     final g = _fixAngle(357.529 + 0.98560028 * d);
     final q = _fixAngle(280.459 + 0.98564736 * d);
@@ -466,11 +567,11 @@ class PrayerCalculator {
   }
 
   static double _midDay(double jd, double t) =>
-      _fixHour(12 - _sunPosition(jd + t).equationOfTime);
+      _fixHour(12 - sunPosition(jd + t).equationOfTime);
 
   static double _sunAngleTime(double jd, double t, double angle, double lat,
       {bool beforeNoon = false}) {
-    final decl = _sunPosition(jd + t).declination;
+    final decl = sunPosition(jd + t).declination;
     final v = (-_dsin(angle) - _dsin(decl) * _dsin(lat)) / (_dcos(decl) * _dcos(lat));
     if (v.isNaN || v.abs() > 1) return double.nan;
     final ha = _dacos(v) / 15;
@@ -479,8 +580,23 @@ class PrayerCalculator {
   }
 
   static double _asrTime(double jd, double t, int shadowFactor, double lat) {
-    final decl = _sunPosition(jd + t).declination;
+    final decl = sunPosition(jd + t).declination;
     return _sunAngleTime(jd, t, -_dacot(shadowFactor + _dtan((lat - decl).abs())), lat);
+  }
+
+  /// Sonnenhöhe zu einem konkreten Zeitpunkt — Grundlage der Kalibrierung.
+  static double altitudeAt(DateTime local, double lat, double lng) {
+    final day = DateTime(local.year, local.month, local.day);
+    final tzHours = day.timeZoneOffset.inMinutes / 60.0;
+    final jd = julianDay(day.year, day.month, day.day) - lng / (15 * 24);
+    final localHours = local.hour + local.minute / 60.0;
+    final t = (localHours - tzHours + lng / 15) / 24;
+    final sp = sunPosition(jd + t);
+    final noon = _midDay(jd, t);
+    final ha = ((localHours - tzHours + lng / 15) - noon) * 15;
+    final sinAlt = _dsin(lat) * _dsin(sp.declination) +
+        _dcos(lat) * _dcos(sp.declination) * _dcos(ha);
+    return _dasin(sinAlt.clamp(-1.0, 1.0));
   }
 
   static DayTimes compute({
@@ -488,28 +604,35 @@ class PrayerCalculator {
     required double lat,
     required double lng,
     required int shadowFactor,
+    required double fajrAngle,
+    required double ishaAngle,
+    required bool useTemkin,
     Map<P, int> offsets = const {},
   }) {
     final day = DateTime(date.year, date.month, date.day);
     final tzHours = day.timeZoneOffset.inMinutes / 60.0;
-    final jd = _julianDay(day.year, day.month, day.day) - lng / (15 * 24);
+    final jd = julianDay(day.year, day.month, day.day) - lng / (15 * 24);
 
     var tFajr = 5 / 24, tSunrise = 6 / 24, tDhuhr = 12 / 24;
     var tAsr = 13 / 24, tMaghrib = 18 / 24, tIsha = 18 / 24;
 
-    for (var i = 0; i < 2; i++) {
+    for (var i = 0; i < 3; i++) {
       tFajr = _sunAngleTime(jd, tFajr, fajrAngle, lat, beforeNoon: true) / 24;
       tSunrise = _sunAngleTime(jd, tSunrise, sunriseAngle, lat, beforeNoon: true) / 24;
       tDhuhr = _midDay(jd, tDhuhr) / 24;
       tAsr = _asrTime(jd, tAsr, shadowFactor, lat) / 24;
       tMaghrib = _sunAngleTime(jd, tMaghrib, sunriseAngle, lat) / 24;
       tIsha = _sunAngleTime(jd, tIsha, ishaAngle, lat) / 24;
+      if (tFajr.isNaN) tFajr = 4 / 24;
+      if (tIsha.isNaN) tIsha = 22 / 24;
     }
 
-    DateTime? toLocal(double tDays, P key) {
+    DateTime? toLocal(double tDays, P key, int temkin) {
       final hours = tDays * 24;
       if (hours.isNaN) return null;
-      final minutes = ((hours + tzHours - lng / 15) * 60).round() + (offsets[key] ?? 0);
+      final minutes = ((hours + tzHours - lng / 15) * 60).round() +
+          (useTemkin ? temkin : 0) +
+          (offsets[key] ?? 0);
       return day.add(Duration(minutes: minutes));
     }
 
@@ -518,12 +641,12 @@ class PrayerCalculator {
       if (v != null) map[k] = v;
     }
 
-    put(P.fajr, toLocal(tFajr, P.fajr));
-    put(P.sunrise, toLocal(tSunrise, P.sunrise));
-    put(P.dhuhr, toLocal(tDhuhr + 1 / (24 * 60), P.dhuhr));
-    put(P.asr, toLocal(tAsr, P.asr));
-    put(P.maghrib, toLocal(tMaghrib, P.maghrib));
-    put(P.isha, toLocal(tIsha, P.isha));
+    put(P.fajr, toLocal(tFajr, P.fajr, 0));
+    put(P.sunrise, toLocal(tSunrise, P.sunrise, temkinSunrise));
+    put(P.dhuhr, toLocal(tDhuhr, P.dhuhr, temkinDhuhr));
+    put(P.asr, toLocal(tAsr, P.asr, temkinAsr));
+    put(P.maghrib, toLocal(tMaghrib, P.maghrib, temkinMaghrib));
+    put(P.isha, toLocal(tIsha, P.isha, 0));
 
     return DayTimes(date: day, times: map, source: TimeSource.calculated);
   }
@@ -561,37 +684,30 @@ double distanceKm(double lat1, double lng1, double lat2, double lng2) {
 }
 
 // =============================================================================
-//  6. Tabellen-Parser fuer eingefuegte Zeiten
+//  6. Tabellen-Parser
 // =============================================================================
 
 class TableParser {
   static final _timeRe = RegExp(r'\b([01]?\d|2[0-3])[:.]([0-5]\d)\b');
   static final _fullDateRe = RegExp(r'\b(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})\b');
 
-  /// Erkennt Zeilen mit einem Tag und mindestens sechs Uhrzeiten.
-  /// Reihenfolge der Zeiten: Imsak, Sonnenaufgang, Mittag, Nachmittag, Abend, Nacht.
   static Map<String, List<String>> parse(String input, int fallbackYear, int fallbackMonth) {
     final result = <String, List<String>>{};
-
     for (final rawLine in input.split(RegExp(r'[\r\n]+'))) {
       final line = rawLine.trim();
       if (line.isEmpty) continue;
-
       final times = _timeRe.allMatches(line).toList();
       if (times.length < 6) continue;
 
       int year = fallbackYear, month = fallbackMonth, day = 0;
-
       final full = _fullDateRe.firstMatch(line);
       if (full != null) {
         day = int.parse(full.group(1)!);
         month = int.parse(full.group(2)!);
         year = int.parse(full.group(3)!);
       } else {
-        // Erste Zahl der Zeile, die nicht Teil einer Uhrzeit ist
         for (final m in RegExp(r'\b(\d{1,2})\b').allMatches(line)) {
-          final inTime = times.any((t) => m.start >= t.start && m.start < t.end);
-          if (inTime) continue;
+          if (times.any((t) => m.start >= t.start && m.start < t.end)) continue;
           final value = int.parse(m.group(1)!);
           if (value >= 1 && value <= 31) {
             day = value;
@@ -602,8 +718,8 @@ class TableParser {
       if (day < 1 || day > 31 || month < 1 || month > 12) continue;
 
       String two(int v) => v.toString().padLeft(2, '0');
-      final key = '$year-${two(month)}-${two(day)}';
-      result[key] = times.take(6).map((m) => '${two(int.parse(m.group(1)!))}:${m.group(2)!}').toList();
+      result['$year-${two(month)}-${two(day)}'] =
+          times.take(6).map((m) => '${two(int.parse(m.group(1)!))}:${m.group(2)!}').toList();
     }
     return result;
   }
@@ -618,8 +734,13 @@ class AppState extends ChangeNotifier {
   ThemeMode themeMode = ThemeMode.dark;
   AppPalette palette = AppPalette.indigo;
   bool use24h = true;
-  bool hanafiAsr = true;
   TimeSource timeSource = TimeSource.calculated;
+
+  // Berechnung
+  int asrShadowFactor = 1; // Diyanet: einfaches Schattenmaß
+  double fajrAngle = 18.0;
+  double ishaAngle = 17.0;
+  bool useTemkin = true;
 
   double? lat, lng;
   String? placeLabel;
@@ -635,15 +756,21 @@ class AppState extends ChangeNotifier {
 
   List<Mosque> mosques = [];
   int mosqueRadiusKm = 5;
+  bool onlySunni = true;
   String? myMosque;
   bool mosquesLoading = false;
   String? mosqueError;
 
   int tasbihCount = 0, tasbihTarget = 33, dhikrIndex = 0;
 
+  // Tracker
+  String userName = '';
+  Map<String, List<String>> prayedDays = {}; // Datum -> Namen der Gebete
+  List<Friend> friends = [];
+
   late SharedPreferences _p;
 
-  static const _dhikr = ['Subhanallah', 'Elhamdulillah', 'Allahu ekber', 'La ilahe illallah', 'Estagfirullah'];
+  static const _dhikr = ['Subhânallâh', 'Elhamdülillâh', 'Allâhu ekber', 'Lâ ilâhe illallâh', 'Estağfirullâh'];
   String get currentDhikr => _dhikr[dhikrIndex % _dhikr.length];
   List<String> get dhikrList => _dhikr;
 
@@ -653,8 +780,11 @@ class AppState extends ChangeNotifier {
     themeMode = ThemeMode.values[_p.getInt('theme') ?? ThemeMode.dark.index];
     palette = AppPalette.values[_p.getInt('palette') ?? 0];
     use24h = _p.getBool('use24h') ?? true;
-    hanafiAsr = _p.getBool('hanafiAsr') ?? true;
     timeSource = TimeSource.values[_p.getInt('timeSource') ?? 0];
+    asrShadowFactor = _p.getInt('asrFactor') ?? 1;
+    fajrAngle = _p.getDouble('fajrAngle') ?? 18.0;
+    ishaAngle = _p.getDouble('ishaAngle') ?? 17.0;
+    useTemkin = _p.getBool('useTemkin') ?? true;
     lat = _p.getDouble('lat');
     lng = _p.getDouble('lng');
     placeLabel = _p.getString('placeLabel');
@@ -664,7 +794,9 @@ class AppState extends ChangeNotifier {
     tasbihTarget = _p.getInt('tasbihTarget') ?? 33;
     dhikrIndex = _p.getInt('dhikrIndex') ?? 0;
     mosqueRadiusKm = _p.getInt('mosqueRadius') ?? 5;
+    onlySunni = _p.getBool('onlySunni') ?? true;
     myMosque = _p.getString('myMosque');
+    userName = _p.getString('userName') ?? '';
 
     final o = _p.getString('offsets');
     if (o != null) {
@@ -675,6 +807,7 @@ class AppState extends ChangeNotifier {
     }
     onlineTimes = _decodeTable(_p.getString('onlineTimes'));
     customTimes = _decodeTable(_p.getString('customTimes'));
+    prayedDays = _decodeTable(_p.getString('prayedDays'));
     final ls = _p.getInt('lastSync');
     if (ls != null) lastSync = DateTime.fromMillisecondsSinceEpoch(ls);
 
@@ -682,6 +815,12 @@ class AppState extends ChangeNotifier {
     if (m != null) {
       mosques = (jsonDecode(m) as List)
           .map((e) => Mosque.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    final f = _p.getString('friends');
+    if (f != null) {
+      friends = (jsonDecode(f) as List)
+          .map((e) => Friend.fromJson(e as Map<String, dynamic>))
           .toList();
     }
   }
@@ -692,14 +831,33 @@ class AppState extends ChangeNotifier {
     return decoded.map((k, v) => MapEntry(k, List<String>.from(v as List)));
   }
 
+  void _setInt(String key, int value, VoidCallback apply) {
+    apply();
+    _p.setInt(key, value);
+    notifyListeners();
+  }
+
   void setLang(AppLang v) => _setInt('lang', v.index, () => lang = v);
   void setTheme(ThemeMode v) => _setInt('theme', v.index, () => themeMode = v);
   void setPalette(AppPalette v) => _setInt('palette', v.index, () => palette = v);
   void setTimeSource(TimeSource v) => _setInt('timeSource', v.index, () => timeSource = v);
+  void setAsrFactor(int v) => _setInt('asrFactor', v, () => asrShadowFactor = v);
 
-  void _setInt(String key, int value, VoidCallback apply) {
-    apply();
-    _p.setInt(key, value);
+  void setAngles({double? fajr, double? isha}) {
+    if (fajr != null) {
+      fajrAngle = fajr.clamp(8.0, 22.0);
+      _p.setDouble('fajrAngle', fajrAngle);
+    }
+    if (isha != null) {
+      ishaAngle = isha.clamp(8.0, 22.0);
+      _p.setDouble('ishaAngle', ishaAngle);
+    }
+    notifyListeners();
+  }
+
+  void setUseTemkin(bool v) {
+    useTemkin = v;
+    _p.setBool('useTemkin', v);
     notifyListeners();
   }
 
@@ -709,15 +867,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setHanafiAsr(bool v) {
-    hanafiAsr = v;
-    _p.setBool('hanafiAsr', v);
-    notifyListeners();
-  }
-
   void setOffset(P p, int minutes) {
     offsets[p] = minutes.clamp(-30, 30);
     _p.setString('offsets', jsonEncode({for (final e in offsets.entries) e.key.name: e.value}));
+    notifyListeners();
+  }
+
+  void setUserName(String v) {
+    userName = v.trim();
+    _p.setString('userName', userName);
     notifyListeners();
   }
 
@@ -749,6 +907,109 @@ class AppState extends ChangeNotifier {
     dhikrIndex = v;
     _p.setInt('dhikrIndex', v);
     notifyListeners();
+  }
+
+  // --- Tracker ---
+  String dayKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  bool hasPrayed(DateTime day, P p) => (prayedDays[dayKey(day)] ?? []).contains(p.name);
+
+  void togglePrayed(DateTime day, P p) {
+    final key = dayKey(day);
+    final list = List<String>.from(prayedDays[key] ?? []);
+    if (list.contains(p.name)) {
+      list.remove(p.name);
+    } else {
+      list.add(p.name);
+      HapticFeedback.selectionClick();
+    }
+    if (list.isEmpty) {
+      prayedDays.remove(key);
+    } else {
+      prayedDays[key] = list;
+    }
+    _p.setString('prayedDays', jsonEncode(prayedDays));
+    notifyListeners();
+  }
+
+  int prayedCount(DateTime day) => (prayedDays[dayKey(day)] ?? []).length;
+
+  /// Zusammenhängende Tage mit fünf Gebeten, rückwärts ab gestern bzw. heute.
+  int get streak {
+    var count = 0;
+    var day = DateTime.now();
+    if (prayedCount(day) < 5) day = day.subtract(const Duration(days: 1));
+    while (prayedCount(day) >= 5) {
+      count++;
+      day = day.subtract(const Duration(days: 1));
+    }
+    return count;
+  }
+
+  List<int> get lastSevenDays {
+    final today = DateTime.now();
+    return List.generate(7, (i) => prayedCount(today.subtract(Duration(days: 6 - i))));
+  }
+
+  int get weekTotal => lastSevenDays.fold(0, (a, b) => a + b);
+
+  /// Kompakter Code zum Teilen — enthält nur Name und Tageszahlen.
+  String buildShareCode() {
+    final today = DateTime.now();
+    final days = <String, int>{};
+    for (var i = 0; i < 7; i++) {
+      final d = today.subtract(Duration(days: 6 - i));
+      days[dayKey(d)] = prayedCount(d);
+    }
+    final payload = jsonEncode({
+      'v': 1,
+      'n': userName.isEmpty ? 'Freund' : userName,
+      'd': days,
+    });
+    return 'NI1:${base64Url.encode(utf8.encode(payload))}';
+  }
+
+  bool addFriendFromCode(String raw) {
+    try {
+      final code = raw.trim().split(RegExp(r'\s+')).firstWhere((s) => s.startsWith('NI1:'));
+      final json = jsonDecode(utf8.decode(base64Url.decode(code.substring(4))))
+          as Map<String, dynamic>;
+      final name = (json['n'] as String?)?.trim();
+      final days = (json['d'] as Map).map((k, v) => MapEntry(k as String, (v as num).toInt()));
+      if (name == null || name.isEmpty) return false;
+      friends.removeWhere((f) => f.name.toLowerCase() == name.toLowerCase());
+      friends.add(Friend(name: name, days: days, updated: DateTime.now()));
+      _saveFriends();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void removeFriend(String name) {
+    friends.removeWhere((f) => f.name == name);
+    _saveFriends();
+  }
+
+  void _saveFriends() {
+    _p.setString('friends', jsonEncode(friends.map((f) => f.toJson()).toList()));
+    notifyListeners();
+  }
+
+  String buildInviteText() {
+    final name = userName.isEmpty ? '' : '$userName ';
+    return switch (lang) {
+      AppLang.de =>
+        '${name}lädt dich zu Nur Islam ein — Gebetszeiten, Qibla und Tesbih, '
+            'kostenlos und ohne Konto.\n$kAppShareUrl',
+      AppLang.tr =>
+        '$name seni Nur Islam\'a davet ediyor — namaz vakitleri, kıble ve tesbih, '
+            'ücretsiz ve hesapsız.\n$kAppShareUrl',
+      AppLang.en =>
+        '${name}invites you to Nur Islam — prayer times, qibla and tasbih, '
+            'free and without an account.\n$kAppShareUrl',
+    };
   }
 
   // --- Standort ---
@@ -812,29 +1073,48 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Ortssuche ueber Nominatim (OpenStreetMap). Liefert Name, Breite, Laenge.
   Future<List<(String, double, double)>> searchPlace(String query) async {
     final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
       'q': query,
       'format': 'json',
       'limit': '8',
-      'accept-language': appState.lang.name,
+      'accept-language': lang.name,
     });
     final res = await http.get(uri, headers: {
-      'User-Agent': 'NurIslamApp/2.0 (persoenliche Nutzung)',
+      'User-Agent': 'NurIslamApp/3.0 (persönliche Nutzung)',
     }).timeout(const Duration(seconds: 20));
     if (res.statusCode != 200) return [];
-    final list = jsonDecode(res.body) as List;
-    return list
+    return (jsonDecode(res.body) as List)
         .map((e) => (
-              (e['display_name'] as String),
+              e['display_name'] as String,
               double.parse(e['lat'] as String),
               double.parse(e['lon'] as String),
             ))
         .toList();
   }
 
-  // --- Moscheen (OpenStreetMap / Overpass) ---
+  // --- Moscheen ---
+  /// Ausrichtungen, die bei aktivem Filter nicht angezeigt werden.
+  static const Set<String> _nonSunni = {
+    'alevi', 'alevism', 'alevite', 'bektashi', 'shia', 'shi\'a', 'shiite',
+    'ismaili', 'twelver', 'zaidi', 'ibadi', 'ahmadiyya', 'ahmadi',
+    'alawite', 'nusayri', 'druze', 'quranist',
+  };
+  static const List<String> _nonSunniNames = ['cemevi', 'cem evi', 'cemvakfı', 'cem vakfı', 'alevi'];
+
+  bool _passesFilter(String name, String? denomination) {
+    if (!onlySunni) return true;
+    final d = denomination?.toLowerCase().trim();
+    if (d != null && d.isNotEmpty) {
+      if (_nonSunni.contains(d)) return false;
+      // Alles, was ausdrücklich sunnitisch oder eine sunnitische Rechtsschule ist:
+      const sunni = {'sunni', 'hanafi', 'shafii', 'shafi\'i', 'maliki', 'hanbali'};
+      if (!sunni.contains(d)) return false;
+    }
+    final n = name.toLowerCase();
+    return !_nonSunniNames.any(n.contains);
+  }
+
   Future<void> loadMosques() async {
     if (lat == null || lng == null || mosquesLoading) return;
     mosquesLoading = true;
@@ -848,12 +1128,12 @@ class AppState extends ChangeNotifier {
   node["amenity"="place_of_worship"]["religion"="muslim"](around:$r,$lat,$lng);
   way["amenity"="place_of_worship"]["religion"="muslim"](around:$r,$lat,$lng);
 );
-out center 80;
+out center 100;
 ''';
       final res = await http
           .post(
             Uri.parse('https://overpass-api.de/api/interpreter'),
-            headers: {'User-Agent': 'NurIslamApp/2.0'},
+            headers: {'User-Agent': 'NurIslamApp/3.0'},
             body: {'data': query},
           )
           .timeout(const Duration(seconds: 40));
@@ -867,15 +1147,19 @@ out center 80;
         final mLat = (el['lat'] ?? el['center']?['lat']) as num?;
         final mLng = (el['lon'] ?? el['center']?['lon']) as num?;
         if (mLat == null || mLng == null) continue;
+        final name = (tags['name'] as String?) ?? 'Moschee';
+        final denom = tags['denomination'] as String?;
+        if (!_passesFilter(name, denom)) continue;
         final street = [tags['addr:street'], tags['addr:housenumber']]
             .whereType<String>()
             .join(' ');
         found.add(Mosque(
-          name: (tags['name'] as String?) ?? 'Moschee',
+          name: name,
           lat: mLat.toDouble(),
           lng: mLng.toDouble(),
           street: street.isEmpty ? null : street,
           city: tags['addr:city'] as String?,
+          denomination: denom,
         ));
       }
       found.sort((a, b) => distanceKm(lat!, lng!, a.lat, a.lng)
@@ -893,6 +1177,13 @@ out center 80;
     mosqueRadiusKm = km;
     _p.setInt('mosqueRadius', km);
     notifyListeners();
+  }
+
+  void setOnlySunni(bool v) {
+    onlySunni = v;
+    _p.setBool('onlySunni', v);
+    notifyListeners();
+    loadMosques();
   }
 
   void setMyMosque(String? name) {
@@ -918,8 +1209,8 @@ out center 80;
         final uri = Uri.https('api.aladhan.com', '/v1/calendar', {
           'latitude': '$lat',
           'longitude': '$lng',
-          'method': '13',
-          'school': hanafiAsr ? '1' : '0',
+          'method': '13', // Diyanet İşleri Başkanlığı
+          'school': asrShadowFactor == 2 ? '1' : '0',
           'month': '${d.month}',
           'year': '${d.year}',
         });
@@ -970,10 +1261,7 @@ out center 80;
     notifyListeners();
   }
 
-  // --- Zeiten abrufen ---
-  String dayKey(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
+  // --- Zeiten ---
   DayTimes? _fromTable(Map<String, List<String>> table, DateTime day, TimeSource src) {
     final row = table[dayKey(day)];
     if (row == null || row.length < 6) return null;
@@ -991,23 +1279,21 @@ out center 80;
 
   DayTimes? timesFor(DateTime date) {
     final day = DateTime(date.year, date.month, date.day);
-
-    // Eigene Tabelle hat immer Vorrang
     final custom = _fromTable(customTimes, day, TimeSource.custom);
     if (custom != null) return custom;
-
     if (lat == null || lng == null) return null;
-
     if (timeSource == TimeSource.online) {
       final online = _fromTable(onlineTimes, day, TimeSource.online);
       if (online != null) return online;
     }
-
     return PrayerCalculator.compute(
       date: day,
       lat: lat!,
       lng: lng!,
-      shadowFactor: hanafiAsr ? 2 : 1,
+      shadowFactor: asrShadowFactor,
+      fajrAngle: fajrAngle,
+      ishaAngle: ishaAngle,
+      useTemkin: useTemkin,
       offsets: offsets,
     );
   }
@@ -1015,7 +1301,7 @@ out center 80;
   MapEntry<P, DateTime>? nextPrayer(DateTime now) {
     final today = timesFor(now);
     if (today == null) return null;
-    for (final p in today.prayersOnly) {
+    for (final p in kPrayers) {
       final t = today[p];
       if (t != null && t.isAfter(now)) return MapEntry(p, t);
     }
@@ -1039,8 +1325,7 @@ out center 80;
   String get locationLabel {
     if (lat == null) return '—';
     if (placeLabel != null && placeLabel!.isNotEmpty) {
-      final short = placeLabel!.split(',').take(2).join(',').trim();
-      return short;
+      return placeLabel!.split(',').take(2).join(',').trim();
     }
     return '${lat!.toStringAsFixed(3)}°, ${lng!.toStringAsFixed(3)}°';
   }
@@ -1062,13 +1347,20 @@ String fmtDuration(Duration d) {
 }
 
 Future<void> openMaps(double lat, double lng, [String? label]) async {
-  final q = label == null ? '$lat,$lng' : Uri.encodeComponent('$label');
-  final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$q&center=$lat,$lng');
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
+  final q = label == null ? '$lat,$lng' : Uri.encodeComponent(label);
+  await launchUrl(
+    Uri.parse('https://www.google.com/maps/search/?api=1&query=$q&center=$lat,$lng'),
+    mode: LaunchMode.externalApplication,
+  );
+}
+
+void copyToClipboard(BuildContext context, String text) {
+  Clipboard.setData(ClipboardData(text: text));
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('copied'))));
 }
 
 // =============================================================================
-//  8. App-Geruest
+//  8. App-Gerüst
 // =============================================================================
 
 class NurIslamApp extends StatelessWidget {
@@ -1111,8 +1403,6 @@ class _RootShellState extends State<RootShell> {
 
   @override
   Widget build(BuildContext context) {
-    // WICHTIG: Der ganze Rahmen haengt am AnimatedBuilder und die Seiten sind
-    // NICHT const — nur so wird jede Aenderung sofort sichtbar.
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
@@ -1248,7 +1538,7 @@ class LocationNotice extends StatelessWidget {
 }
 
 // =============================================================================
-//  9. Reiter 1 — Zeiten
+//  9. Reiter 1 — Zeiten mit Tracker
 // =============================================================================
 
 class TimesTab extends StatefulWidget {
@@ -1308,6 +1598,11 @@ class _TimesTabState extends State<TimesTab> {
             const SizedBox(height: 14),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _TrackerCard(now: _now),
+            ),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(18),
@@ -1355,21 +1650,6 @@ class _TimesTabState extends State<TimesTab> {
                 ),
               ]),
             ),
-            if (appState.myMosque != null) ...[
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(children: [
-                  Icon(Icons.mosque_outlined, size: 15, color: theme.colorScheme.outline),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text('${tr('my_mosque')}: ${appState.myMosque}',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: theme.colorScheme.outline)),
-                  ),
-                ]),
-              ),
-            ],
           ],
         ],
       ),
@@ -1459,6 +1739,7 @@ class _PrayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isCurrent = appState.currentPeriod(now)?.key == p;
+    final done = p.isPrayer && appState.hasPrayed(now, p);
 
     return Container(
       decoration: BoxDecoration(
@@ -1466,7 +1747,7 @@ class _PrayerRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.only(left: 12, right: 4, top: 6, bottom: 6),
       child: Row(children: [
         Icon(p.icon, size: 20, color: isCurrent ? pal.gold : theme.colorScheme.outline),
         const SizedBox(width: 14),
@@ -1480,13 +1761,253 @@ class _PrayerRow extends StatelessWidget {
               fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
               fontFeatures: const [FontFeature.tabularFigures()],
             )),
+        if (p.isPrayer)
+          IconButton(
+            onPressed: () => appState.togglePrayed(now, p),
+            icon: Icon(
+              done ? Icons.check_circle : Icons.circle_outlined,
+              color: done ? pal.accent : theme.colorScheme.outlineVariant,
+            ),
+          )
+        else
+          const SizedBox(width: 48),
       ]),
     );
   }
 }
 
+class _TrackerCard extends StatelessWidget {
+  final DateTime now;
+  const _TrackerCard({required this.now});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final week = appState.lastSevenDays;
+    final today = appState.prayedCount(now);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.task_alt, size: 18, color: pal.gold),
+            const SizedBox(width: 8),
+            Text(tr('tracker'),
+                style: theme.textTheme.labelLarge
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            const Spacer(),
+            TextButton(
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const FriendsPage())),
+              child: Text(tr('friends')),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          Row(children: [
+            Text('$today / 5',
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(width: 8),
+            Text(tr('tracker_today'), style: theme.textTheme.bodySmall),
+            const Spacer(),
+            Icon(Icons.local_fire_department, size: 18, color: pal.gold),
+            const SizedBox(width: 4),
+            Text('${appState.streak} ${tr('days')}', style: theme.textTheme.bodyMedium),
+          ]),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (var i = 0; i < 7; i++)
+                _DayBar(
+                  count: week[i],
+                  label: _weekdaysShort[appState.lang]![
+                      now.subtract(Duration(days: 6 - i)).weekday - 1],
+                  isToday: i == 6,
+                ),
+            ],
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _DayBar extends StatelessWidget {
+  final int count;
+  final String label;
+  final bool isToday;
+  const _DayBar({required this.count, required this.label, required this.isToday});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(children: [
+      Container(
+        width: 26,
+        height: 52,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(6),
+          border: isToday ? Border.all(color: pal.gold, width: 1.4) : null,
+        ),
+        alignment: Alignment.bottomCenter,
+        child: FractionallySizedBox(
+          heightFactor: (count / 5).clamp(0.0, 1.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: count >= 5 ? pal.gold : pal.accent,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(label, style: theme.textTheme.labelSmall),
+    ]);
+  }
+}
+
 // =============================================================================
-//  10. Reiter 2 — Moscheen in der Naehe
+//  10. Freunde
+// =============================================================================
+
+class FriendsPage extends StatelessWidget {
+  const FriendsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final myWeek = appState.weekTotal;
+
+        final rows = <(String, int, bool)>[
+          (appState.userName.isEmpty ? tr('me') : appState.userName, myWeek, true),
+          ...appState.friends.map((f) {
+            final total = f.days.values.fold<int>(0, (a, b) => a + b);
+            return (f.name, total, false);
+          }),
+        ]..sort((a, b) => b.$2.compareTo(a.$2));
+
+        return Scaffold(
+          appBar: AppBar(title: Text(tr('friends'))),
+          body: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Text(tr('no_server_note'),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(height: 1.5, color: theme.colorScheme.outline)),
+              const SizedBox(height: 18),
+              TextFormField(
+                initialValue: appState.userName,
+                decoration: InputDecoration(
+                  labelText: tr('your_name'),
+                  helperText: tr('name_hint'),
+                ),
+                onChanged: appState.setUserName,
+              ),
+              const SizedBox(height: 20),
+              Text('${tr('week')} · ${tr('friends')}', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Card(
+                child: Column(children: [
+                  for (var i = 0; i < rows.length; i++) ...[
+                    if (i > 0) const Divider(height: 1),
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: rows[i].$3
+                            ? pal.gold.withValues(alpha: 0.25)
+                            : theme.colorScheme.surfaceContainerHighest,
+                        child: Text('${i + 1}'),
+                      ),
+                      title: Text(rows[i].$1,
+                          style: TextStyle(
+                              fontWeight: rows[i].$3 ? FontWeight.w700 : FontWeight.w500)),
+                      subtitle: Text('${rows[i].$2} / 35'),
+                      trailing: rows[i].$3
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: tr('remove'),
+                              onPressed: () => appState.removeFriend(rows[i].$1),
+                            ),
+                    ),
+                  ],
+                  if (appState.friends.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(tr('friends_none'),
+                          textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
+                    ),
+                ]),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () => copyToClipboard(context, appState.buildShareCode()),
+                icon: const Icon(Icons.ios_share),
+                label: Text(tr('share_progress')),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => copyToClipboard(context, appState.buildInviteText()),
+                icon: const Icon(Icons.person_add_alt),
+                label: Text(tr('invite_friend')),
+              ),
+              const SizedBox(height: 20),
+              Text(tr('add_friend'), style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              _PasteFriendField(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PasteFriendField extends StatefulWidget {
+  @override
+  State<_PasteFriendField> createState() => _PasteFriendFieldState();
+}
+
+class _PasteFriendFieldState extends State<_PasteFriendField> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Expanded(
+        child: TextField(
+          controller: _ctrl,
+          maxLines: 2,
+          decoration: InputDecoration(hintText: tr('paste_code_hint')),
+        ),
+      ),
+      const SizedBox(width: 8),
+      IconButton.filled(
+        icon: const Icon(Icons.add),
+        onPressed: () {
+          final ok = appState.addFriendFromCode(_ctrl.text);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(ok ? tr('saved') : tr('code_invalid'))),
+          );
+          if (ok) _ctrl.clear();
+        },
+      ),
+    ]);
+  }
+}
+
+// =============================================================================
+//  11. Reiter 2 — Moscheen
 // =============================================================================
 
 class MosquesTab extends StatefulWidget {
@@ -1519,8 +2040,6 @@ class _MosquesTabState extends State<MosquesTab> {
       padding: const EdgeInsets.only(bottom: 32),
       children: [
         PageHeader(title: tr('mosques_title'), subtitle: appState.locationLabel),
-
-        // Umkreis
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(children: [
@@ -1546,8 +2065,14 @@ class _MosquesTabState extends State<MosquesTab> {
             ),
           ]),
         ),
-        const SizedBox(height: 8),
-
+        SwitchListTile(
+          value: appState.onlySunni,
+          onChanged: appState.setOnlySunni,
+          title: Text(tr('only_sunni')),
+          subtitle: Text(tr('only_sunni_hint'), style: theme.textTheme.bodySmall),
+          secondary: const Icon(Icons.filter_alt_outlined),
+        ),
+        const SizedBox(height: 4),
         if (appState.mosquesLoading)
           Padding(
             padding: const EdgeInsets.all(30),
@@ -1581,17 +2106,14 @@ class _MosquesTabState extends State<MosquesTab> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Card(
-              child: Column(
-                children: [
-                  for (var i = 0; i < appState.mosques.length; i++) ...[
-                    if (i > 0) const Divider(height: 1),
-                    _MosqueRow(m: appState.mosques[i]),
-                  ],
+              child: Column(children: [
+                for (var i = 0; i < appState.mosques.length; i++) ...[
+                  if (i > 0) const Divider(height: 1),
+                  _MosqueRow(m: appState.mosques[i]),
                 ],
-              ),
+              ]),
             ),
           ),
-
         const SizedBox(height: 18),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -1645,7 +2167,7 @@ class _MosqueRow extends StatelessWidget {
 }
 
 // =============================================================================
-//  11. Reiter 3 — Qibla
+//  12. Reiter 3 — Qibla
 // =============================================================================
 
 class QiblaTab extends StatefulWidget {
@@ -1676,9 +2198,8 @@ class _QiblaTabState extends State<QiblaTab> {
           if (mounted && !_sensorMissing) setState(() => _sensorMissing = true);
           return;
         }
-        final smoothed = _heading == null
-            ? h
-            : (_heading! + Qibla.delta(_heading!, h) * 0.25 + 360) % 360;
+        final smoothed =
+            _heading == null ? h : (_heading! + Qibla.delta(_heading!, h) * 0.25 + 360) % 360;
         if (mounted) {
           setState(() {
             _heading = smoothed;
@@ -1752,7 +2273,6 @@ class _QiblaTabState extends State<QiblaTab> {
                   size: const Size(320, 320),
                   painter: CompassDialPainter(
                     qiblaBearing: bearing,
-                    isDark: theme.brightness == Brightness.dark,
                     onSurface: theme.colorScheme.onSurface,
                     outline: theme.colorScheme.outlineVariant,
                     gold: pal.gold,
@@ -1776,10 +2296,7 @@ class _QiblaTabState extends State<QiblaTab> {
                   ),
                 ),
               ),
-              Positioned(
-                top: 0,
-                child: Icon(Icons.arrow_drop_down, size: 34, color: pal.gold),
-              ),
+              Positioned(top: 0, child: Icon(Icons.arrow_drop_down, size: 34, color: pal.gold)),
             ]),
           ),
         ),
@@ -1833,8 +2350,8 @@ class _QiblaTabState extends State<QiblaTab> {
               ListTile(
                 leading: const Icon(Icons.straighten),
                 title: Text(tr('qibla_distance')),
-                trailing: Text('${dist.toStringAsFixed(0)} ${tr('km')}',
-                    style: theme.textTheme.titleMedium),
+                trailing:
+                    Text('${dist.toStringAsFixed(0)} ${tr('km')}', style: theme.textTheme.titleMedium),
               ),
               const Divider(height: 1),
               ListTile(
@@ -1857,12 +2374,10 @@ class _QiblaTabState extends State<QiblaTab> {
 
 class CompassDialPainter extends CustomPainter {
   final double qiblaBearing;
-  final bool isDark;
   final Color onSurface, outline, gold, surface, deep;
 
   CompassDialPainter({
     required this.qiblaBearing,
-    required this.isDark,
     required this.onSurface,
     required this.outline,
     required this.gold,
@@ -1882,10 +2397,20 @@ class CompassDialPainter extends CustomPainter {
         ..shader = RadialGradient(colors: [surface, deep])
             .createShader(Rect.fromCircle(center: center, radius: radius)),
     );
-    canvas.drawCircle(center, radius,
-        Paint()..style = PaintingStyle.stroke..strokeWidth = 1.4..color = gold.withValues(alpha: 0.5));
-    canvas.drawCircle(center, radius - 26,
-        Paint()..style = PaintingStyle.stroke..strokeWidth = 0.8..color = outline.withValues(alpha: 0.6));
+    canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4
+          ..color = gold.withValues(alpha: 0.5));
+    canvas.drawCircle(
+        center,
+        radius - 26,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8
+          ..color = outline.withValues(alpha: 0.6));
 
     for (var deg = 0; deg < 360; deg += 5) {
       final major = deg % 45 == 0;
@@ -1929,9 +2454,11 @@ class CompassDialPainter extends CustomPainter {
     canvas.save();
     canvas.translate(qPos.dx, qPos.dy);
     canvas.rotate(qiblaBearing * math.pi / 180);
-    final cube = Rect.fromCenter(center: Offset.zero, width: 15, height: 15);
-    canvas.drawRRect(RRect.fromRectAndRadius(cube, const Radius.circular(2)),
-        Paint()..color = const Color(0xFF141414));
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset.zero, width: 15, height: 15), const Radius.circular(2)),
+      Paint()..color = const Color(0xFF141414),
+    );
     canvas.drawLine(const Offset(-7.5, -2.5), const Offset(7.5, -2.5),
         Paint()..color = gold..strokeWidth = 2.2);
     canvas.restore();
@@ -1939,10 +2466,9 @@ class CompassDialPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CompassDialPainter old) =>
-      old.qiblaBearing != qiblaBearing || old.isDark != isDark || old.gold != gold;
+      old.qiblaBearing != qiblaBearing || old.gold != gold || old.surface != surface;
 }
 
-/// Stilisierter Gebetsteppich. Die Kopfseite (Mihrab) zeigt zur Kaaba.
 class PrayerRugNeedlePainter extends CustomPainter {
   final bool aligned;
   final Color gold, primary, accent;
@@ -1984,8 +2510,7 @@ class PrayerRugNeedlePainter extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, 0, w, h)),
     );
 
-    canvas.drawPath(rug,
-        Paint()..style = PaintingStyle.stroke..strokeWidth = 2.4..color = gold);
+    canvas.drawPath(rug, Paint()..style = PaintingStyle.stroke..strokeWidth = 2.4..color = gold);
 
     final inner = Path()
       ..moveTo(w * 0.17, h * 0.88)
@@ -1994,8 +2519,12 @@ class PrayerRugNeedlePainter extends CustomPainter {
       ..cubicTo(w * 0.67, h * 0.12, w * 0.83, h * 0.17, w * 0.83, h * 0.38)
       ..lineTo(w * 0.83, h * 0.88)
       ..close();
-    canvas.drawPath(inner,
-        Paint()..style = PaintingStyle.stroke..strokeWidth = 1.1..color = gold.withValues(alpha: 0.75));
+    canvas.drawPath(
+        inner,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.1
+          ..color = gold.withValues(alpha: 0.75));
 
     final mihrab = Path()
       ..moveTo(w * 0.30, h * 0.52)
@@ -2005,11 +2534,15 @@ class PrayerRugNeedlePainter extends CustomPainter {
       ..lineTo(w * 0.70, h * 0.52)
       ..close();
     canvas.drawPath(mihrab, Paint()..color = Colors.white.withValues(alpha: 0.10));
-    canvas.drawPath(mihrab,
-        Paint()..style = PaintingStyle.stroke..strokeWidth = 1.4..color = gold.withValues(alpha: 0.9));
+    canvas.drawPath(
+        mihrab,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4
+          ..color = gold.withValues(alpha: 0.9));
 
-    final cube = Rect.fromCenter(
-        center: Offset(w * 0.5, h * 0.365), width: w * 0.17, height: w * 0.17);
+    final cube =
+        Rect.fromCenter(center: Offset(w * 0.5, h * 0.365), width: w * 0.17, height: w * 0.17);
     canvas.drawRRect(RRect.fromRectAndRadius(cube, const Radius.circular(1.5)),
         Paint()..color = const Color(0xFF0C0C0C));
     canvas.drawLine(
@@ -2026,8 +2559,13 @@ class PrayerRugNeedlePainter extends CustomPainter {
 
     for (var i = 0; i < 7; i++) {
       final x = w * (0.14 + i * 0.12);
-      canvas.drawLine(Offset(x, h * 0.94), Offset(x, h * 0.99),
-          Paint()..color = gold.withValues(alpha: 0.8)..strokeWidth = 1.6..strokeCap = StrokeCap.round);
+      canvas.drawLine(
+          Offset(x, h * 0.94),
+          Offset(x, h * 0.99),
+          Paint()
+            ..color = gold.withValues(alpha: 0.8)
+            ..strokeWidth = 1.6
+            ..strokeCap = StrokeCap.round);
     }
 
     final tip = Path()
@@ -2044,7 +2582,7 @@ class PrayerRugNeedlePainter extends CustomPainter {
 }
 
 // =============================================================================
-//  12. Reiter 4 — Tesbih
+//  13. Reiter 4 — Tesbih
 // =============================================================================
 
 class TasbihTab extends StatelessWidget {
@@ -2112,7 +2650,7 @@ class TasbihTab extends StatelessWidget {
                       style: const TextStyle(
                           color: Colors.white, fontSize: 64, fontWeight: FontWeight.w300, height: 1.0)),
                   const SizedBox(height: 4),
-                  Text('${tr('tasbih_target')} $target · x$rounds',
+                  Text('${tr('tasbih_target')} $target · ×$rounds',
                       style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 ]),
               ]),
@@ -2150,7 +2688,7 @@ class TasbihTab extends StatelessWidget {
 }
 
 // =============================================================================
-//  13. Reiter 5 — Mehr (Einstellungen, Q&A gesperrt)
+//  14. Reiter 5 — Mehr
 // =============================================================================
 
 class MoreTab extends StatelessWidget {
@@ -2171,8 +2709,17 @@ class MoreTab extends StatelessWidget {
                 leading: const Icon(Icons.settings_outlined),
                 title: Text(tr('tab_settings')),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SettingsPage())),
+                onTap: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.groups_outlined),
+                title: Text(tr('friends')),
+                subtitle: Text('${appState.friends.length}'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => const FriendsPage())),
               ),
               const Divider(height: 1),
               ListTile(
@@ -2180,8 +2727,8 @@ class MoreTab extends StatelessWidget {
                 title: Text(tr('location')),
                 subtitle: Text(appState.locationLabel),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const LocationPickerPage())),
+                onTap: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => const LocationPickerPage())),
               ),
               const Divider(height: 1),
               ListTile(
@@ -2211,19 +2758,25 @@ class MoreTab extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 34),
           child: Text(tr('qa_locked_body'),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
+              textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 26),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(tr('about_body'),
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(height: 1.5, color: theme.colorScheme.outline)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(tr('settings_about').toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary)),
+            const SizedBox(height: 8),
+            Text(tr('about_body'),
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.55)),
+          ]),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         Center(
-          child: Text('Nur Islam · 2.0.0',
+          child: Text('Nur Islam · 3.0.0',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ),
       ],
@@ -2232,7 +2785,7 @@ class MoreTab extends StatelessWidget {
 }
 
 // =============================================================================
-//  14. Einstellungen
+//  15. Einstellungen
 // =============================================================================
 
 class SettingsPage extends StatelessWidget {
@@ -2255,7 +2808,7 @@ class SettingsPage extends StatelessWidget {
                 child: SegmentedButton<AppLang>(
                   segments: const [
                     ButtonSegment(value: AppLang.de, label: Text('Deutsch')),
-                    ButtonSegment(value: AppLang.tr, label: Text('Turkce')),
+                    ButtonSegment(value: AppLang.tr, label: Text('Türkçe')),
                     ButtonSegment(value: AppLang.en, label: Text('English')),
                   ],
                   selected: {appState.lang},
@@ -2359,8 +2912,8 @@ class SettingsPage extends StatelessWidget {
                       title: Text(tr('custom_table')),
                       subtitle: Text('${tr('stored_days')}: ${appState.customTimes.length}'),
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const CustomTablePage())),
+                      onTap: () => Navigator.push(
+                          context, MaterialPageRoute(builder: (_) => const CustomTablePage())),
                     ),
                   ]),
                 ),
@@ -2370,18 +2923,41 @@ class SettingsPage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.wb_sunny_outlined),
-                    title: Text(tr('settings_madhab')),
-                    subtitle: Text(appState.hanafiAsr ? tr('madhab_hanafi') : tr('madhab_shafii')),
-                    trailing: Switch(
-                      value: appState.hanafiAsr,
-                      onChanged: (v) {
-                        appState.setHanafiAsr(v);
-                        if (appState.timeSource == TimeSource.online) appState.syncOnline();
-                      },
+                  child: Column(children: [
+                    ListTile(
+                      leading: const Icon(Icons.wb_sunny_outlined),
+                      title: Text(tr('asr_method')),
+                      subtitle: Text(appState.asrShadowFactor == 1
+                          ? tr('asr_first')
+                          : tr('asr_second')),
+                      trailing: Switch(
+                        value: appState.asrShadowFactor == 2,
+                        onChanged: (v) {
+                          appState.setAsrFactor(v ? 2 : 1);
+                          if (appState.timeSource == TimeSource.online) appState.syncOnline();
+                        },
+                      ),
                     ),
-                  ),
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      value: appState.useTemkin,
+                      onChanged: appState.setUseTemkin,
+                      secondary: const Icon(Icons.timer_outlined),
+                      title: Text(tr('temkin')),
+                      subtitle: Text(tr('temkin_hint')),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.brightness_4_outlined),
+                      title: Text(tr('angles')),
+                      subtitle: Text(
+                          '${tr('fajr_angle')} ${appState.fajrAngle.toStringAsFixed(1)}°  ·  '
+                          '${tr('isha_angle')} ${appState.ishaAngle.toStringAsFixed(1)}°'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(
+                          context, MaterialPageRoute(builder: (_) => const AnglesPage())),
+                    ),
+                  ]),
                 ),
               ),
 
@@ -2504,7 +3080,132 @@ class _PaletteChip extends StatelessWidget {
 }
 
 // =============================================================================
-//  15. Standort selbst waehlen
+//  16. Dämmerungswinkel und Kalibrierung
+// =============================================================================
+
+class AnglesPage extends StatefulWidget {
+  const AnglesPage({super.key});
+  @override
+  State<AnglesPage> createState() => _AnglesPageState();
+}
+
+class _AnglesPageState extends State<AnglesPage> {
+  final _fajrCtrl = TextEditingController();
+  final _ishaCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _fajrCtrl.dispose();
+    _ishaCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Rechnet aus einer eingegebenen Uhrzeit den zugehörigen Sonnenwinkel.
+  double? _angleFromTime(String input) {
+    if (appState.lat == null) return null;
+    final m = RegExp(r'^\s*(\d{1,2})[:.](\d{2})\s*$').firstMatch(input);
+    if (m == null) return null;
+    final now = DateTime.now();
+    final t = DateTime(now.year, now.month, now.day, int.parse(m.group(1)!), int.parse(m.group(2)!));
+    final alt = PrayerCalculator.altitudeAt(t, appState.lat!, appState.lng!);
+    if (alt > -5 || alt < -25) return null;
+    return -alt;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) => Scaffold(
+        appBar: AppBar(title: Text(tr('angles'))),
+        body: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(tr('angles_hint'), style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
+            const SizedBox(height: 20),
+            _slider(
+              label: '${tr('fajr_angle')}: ${appState.fajrAngle.toStringAsFixed(1)}°',
+              value: appState.fajrAngle,
+              onChanged: (v) => appState.setAngles(fajr: v),
+            ),
+            _slider(
+              label: '${tr('isha_angle')}: ${appState.ishaAngle.toStringAsFixed(1)}°',
+              value: appState.ishaAngle,
+              onChanged: (v) => appState.setAngles(isha: v),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () => appState.setAngles(fajr: 18, isha: 17),
+              child: const Text('Diyanet: 18° / 17°'),
+            ),
+            const SizedBox(height: 26),
+            Text(tr('calibrate'), style: theme.textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(tr('calibrate_hint'), style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                child: TextField(
+                  controller: _fajrCtrl,
+                  decoration: InputDecoration(labelText: tr('p_fajr'), hintText: '04:07'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _ishaCtrl,
+                  decoration: InputDecoration(labelText: tr('p_isha'), hintText: '22:58'),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () {
+                final f = _angleFromTime(_fajrCtrl.text);
+                final i = _angleFromTime(_ishaCtrl.text);
+                if (f == null && i == null) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(tr('calibrate_failed'))));
+                  return;
+                }
+                appState.setAngles(fajr: f, isha: i);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('${tr('calibrated')}: '
+                      '${appState.fajrAngle.toStringAsFixed(1)}° / '
+                      '${appState.ishaAngle.toStringAsFixed(1)}°'),
+                ));
+              },
+              icon: const Icon(Icons.tune),
+              label: Text(tr('calibrate')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _slider({
+    required String label,
+    required double value,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label),
+      Slider(
+        value: value,
+        min: 10,
+        max: 20,
+        divisions: 100,
+        label: value.toStringAsFixed(1),
+        onChanged: onChanged,
+      ),
+    ]);
+  }
+}
+
+// =============================================================================
+//  17. Standort wählen
 // =============================================================================
 
 class LocationPickerPage extends StatefulWidget {
@@ -2549,7 +3250,8 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
     try {
       final r = await appState.searchPlace(q);
       setState(() => _results = r);
-    } catch (e) {
+      if (r.isEmpty) setState(() => _error = tr('no_results'));
+    } catch (_) {
       setState(() => _error = tr('no_results'));
     }
     if (mounted) setState(() => _searching = false);
@@ -2563,7 +3265,6 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Automatisch
           Card(
             child: ListTile(
               leading: const Icon(Icons.my_location),
@@ -2580,8 +3281,6 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
             ),
           ),
           const SizedBox(height: 20),
-
-          // Ortssuche
           Text(tr('search_place'), style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Row(children: [
@@ -2623,9 +3322,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                 },
               ),
             ),
-
           const SizedBox(height: 20),
-          // Koordinaten
           Text(tr('coords_manual'), style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           Row(children: [
@@ -2672,11 +3369,8 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
             ),
           ]),
           const SizedBox(height: 12),
-          Text(
-            'Tipp: In Google Maps lange auf eine Stelle tippen, die angezeigten '
-            'Koordinaten kopieren und hier einfuegen.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-          ),
+          Text(tr('maps_tip'),
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ],
       ),
     );
@@ -2684,7 +3378,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
 }
 
 // =============================================================================
-//  16. Eigene Zeiten einfuegen
+//  18. Eigene Zeiten einfügen
 // =============================================================================
 
 class CustomTablePage extends StatefulWidget {
@@ -2747,11 +3441,10 @@ class _CustomTablePageState extends State<CustomTablePage> {
             minLines: 8,
             decoration: const InputDecoration(
               hintText: '01  04:23  06:13  13:38  17:29  20:52  22:32\n'
-                  '02  04:25  06:14  13:38  17:28  20:50  22:30\n...',
+                  '02  04:25  06:14  13:38  17:28  20:50  22:30\n…',
             ),
-            onChanged: (v) => setState(() {
-              _parsedCount = TableParser.parse(v, _year, _month).length;
-            }),
+            onChanged: (v) =>
+                setState(() => _parsedCount = TableParser.parse(v, _year, _month).length),
           ),
           const SizedBox(height: 10),
           if (_parsedCount != null)
@@ -2771,8 +3464,8 @@ class _CustomTablePageState extends State<CustomTablePage> {
               await appState.saveCustomTable(table);
               appState.setTimeSource(TimeSource.custom);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${tr('saved')}: ${table.length}')));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text('${tr('saved')}: ${table.length}')));
                 Navigator.pop(context);
               }
             },
