@@ -64,6 +64,61 @@ jobs:
           fi
           cat "$MANIFEST"
 
+      - name: App-Namen setzen
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          sed -i 's#android:label="[^"]*"#android:label="Nur Islam"#' "$MANIFEST"
+          grep -o 'android:label="[^"]*"' "$MANIFEST"
+
+      - name: App-Symbol erzeugen (goldener Halbmond auf Lila)
+        run: |
+          pip install --quiet pillow
+          mkdir -p assets/icon
+          python3 - <<'ICON'
+          from PIL import Image, ImageDraw
+          S = 1024
+          img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+          d = ImageDraw.Draw(img)
+          # Hintergrund im Aubergine-Farbton der App
+          d.rounded_rectangle([0, 0, S, S], radius=int(S*0.22), fill=(61, 44, 82, 255))
+          d.rounded_rectangle([0, 0, S, S], radius=int(S*0.22),
+                              outline=(201, 162, 39, 120), width=int(S*0.012))
+          # Halbmond: grosser Kreis minus versetzter Kreis
+          moon = Image.new("L", (S, S), 0)
+          md = ImageDraw.Draw(moon)
+          r = int(S*0.30)
+          cx, cy = int(S*0.52), int(S*0.50)
+          md.ellipse([cx-r, cy-r, cx+r, cy+r], fill=255)
+          r2 = int(r*0.86)
+          cx2, cy2 = cx + int(r*0.34), cy - int(r*0.12)
+          md.ellipse([cx2-r2, cy2-r2, cx2+r2, cy2+r2], fill=0)
+          gold = Image.new("RGBA", (S, S), (212, 175, 55, 255))
+          img.paste(gold, (0, 0), moon)
+          # kleiner Stern
+          sr = int(S*0.055)
+          sx, sy = int(S*0.70), int(S*0.34)
+          d.regular_polygon((sx, sy, sr), 5, rotation=-18, fill=(212, 175, 55, 255))
+          img.save("assets/icon/icon.png")
+          print("Symbol erzeugt")
+          ICON
+          ls -l assets/icon
+
+      - name: Symbol in das Projekt einbauen
+        run: |
+          flutter pub add --dev flutter_launcher_icons
+          cat >> pubspec.yaml <<'CFG'
+
+          flutter_launcher_icons:
+            android: true
+            ios: true
+            image_path: "assets/icon/icon.png"
+            adaptive_icon_background: "#3D2C52"
+            adaptive_icon_foreground: "assets/icon/icon.png"
+            remove_alpha_ios: true
+          CFG
+          flutter pub get
+          dart run flutter_launcher_icons
+
       - name: Abhaengigkeiten laden
         run: flutter pub get
 
