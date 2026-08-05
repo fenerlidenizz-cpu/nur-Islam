@@ -406,6 +406,115 @@ const Map<String, List<String>> _strings = {
   'kerahat_now': ['Kerahat-Zeit läuft', 'Kerahat vakti', 'Makruh time'],
   'kerahat_ends': ['endet in', 'bitiyor', 'ends in'],
   'minutes': ['Minuten', 'dakika', 'minutes'],
+
+  // Community
+  'tab_community': ['Community', 'Topluluk', 'Community'],
+  'sub_news': ['Neuigkeiten', 'Haberler', 'News'],
+  'sub_friends': ['Freunde', 'Arkadaşlar', 'Friends'],
+  'sub_qa': ['Frage & Antwort', 'Soru & Cevap', 'Q&A'],
+  'news_locked': [
+    'Hier erscheinen bald Spendenaktionen und Nachrichten, die für die Gemeinschaft '
+        'wichtig sind. Der Bereich wird erst freigeschaltet, wenn die Quellen dafür stehen.',
+    'Burada yakında bağış kampanyaları ve topluluk için önemli haberler görünecek. '
+        'Kaynaklar hazır olduğunda açılacak.',
+    'Donation campaigns and news that matter to the community will appear here. The '
+        'section unlocks once the sources are in place.',
+  ],
+  'avg_week': ['Schnitt pro Woche', 'Haftalık ortalama', 'Weekly average'],
+  'avg_month': ['Schnitt pro Monat', 'Aylık ortalama', 'Monthly average'],
+  'per_day': ['pro Tag', 'günde', 'per day'],
+  'ranking': ['Rangliste', 'Sıralama', 'Ranking'],
+  'total_prayers': ['Gebete', 'namaz', 'prayers'],
+  'my_code': ['Mein Code', 'Kodum', 'My code'],
+  'my_code_hint': [
+    'Schick diesen Code deinen Freunden. Sie fügen ihn bei sich ein — und du ihren.',
+    'Bu kodu arkadaşlarına gönder. Onlar sana kendi kodlarını yollasın.',
+    'Send this code to your friends. They paste it on their side — and you paste theirs.',
+  ],
+
+  // Kalender
+  'calendar': ['Kalender', 'Takvim', 'Calendar'],
+  'special_days': ['Besondere Tage', 'Özel günler', 'Special days'],
+  'hijri_note': [
+    'Die islamischen Daten sind berechnet und können um einen Tag abweichen. '
+        'Maßgeblich ist der Kalender deiner Moschee.',
+    'Hicri tarihler hesaplanmıştır ve bir gün sapabilir. Esas olan camindeki takvimdir.',
+    'Islamic dates are calculated and may differ by a day. Your mosque\'s calendar is authoritative.',
+  ],
+
+  // Tutorial
+  'skip': ['Überspringen', 'Atla', 'Skip'],
+  'next': ['Weiter', 'Devam', 'Next'],
+  'start': ['Los geht\'s', 'Başla', 'Let\'s go'],
+  'tut1_t': ['Willkommen', 'Hoş geldin', 'Welcome'],
+  'tut1_b': [
+    'Nur Islam zeigt dir Gebetszeiten, die Qibla-Richtung und mehr — kostenlos, '
+        'ohne Werbung und ohne Konto.',
+    'Nur Islam sana namaz vakitlerini, kıble yönünü ve daha fazlasını gösterir — '
+        'ücretsiz, reklamsız ve hesapsız.',
+    'Nur Islam shows prayer times, the qibla direction and more — free, without ads '
+        'and without an account.',
+  ],
+  'tut2_t': ['Tage wechseln', 'Günleri değiştir', 'Switch days'],
+  'tut2_b': [
+    'Wische auf dem Zeiten-Reiter nach links oder rechts, um einen Tag vor oder zurück '
+        'zu gehen. Über das Kalender-Symbol kommst du zu jedem Datum.',
+    'Vakitler sekmesinde sola veya sağa kaydırarak gün değiştirebilirsin. Takvim '
+        'simgesiyle istediğin tarihe gidebilirsin.',
+    'Swipe left or right on the times tab to move a day forward or back. The calendar '
+        'icon takes you to any date.',
+  ],
+  'tut3_t': ['Zeiten deiner Moschee', 'Caminin vakitleri', 'Your mosque\'s times'],
+  'tut3_b': [
+    'Oben rechts steht, woher die Zeiten stammen. Tippe darauf, um eine Moschee zu '
+        'wählen, sie anzurufen oder den Weg dorthin zu öffnen.',
+    'Sağ üstte vakitlerin kaynağı yazar. Dokunarak cami seçebilir, arayabilir veya '
+        'yol tarifi açabilirsin.',
+    'The top right shows where the times come from. Tap it to choose a mosque, call it '
+        'or open directions.',
+  ],
+  'tut4_t': ['Qibla finden', 'Kıbleyi bul', 'Find the qibla'],
+  'tut4_b': [
+    'Halte das Gerät flach. Der Ring leuchtet heller, je näher du an der Richtung bist, '
+        'und der Teppich zeigt mit der Kopfseite zur Kaaba.',
+    'Cihazı düz tut. Yöne yaklaştıkça halka daha parlak yanar; seccadenin baş tarafı '
+        'Kâbe\'yi gösterir.',
+    'Hold the device flat. The ring glows brighter as you get closer, and the rug\'s head '
+        'end points to the Kaaba.',
+  ],
+  'tut5_t': ['Festhalten und teilen', 'Takip et ve paylaş', 'Track and share'],
+  'tut5_b': [
+    'Hake verrichtete Gebete ab und vergleiche dich mit Freunden — alles bleibt auf '
+        'deinem Gerät, es gibt kein Konto und keinen Server.',
+    'Kıldığın namazları işaretle ve arkadaşlarınla karşılaştır — her şey cihazında '
+        'kalır, hesap ve sunucu yok.',
+    'Tick off the prayers you have performed and compare with friends — everything stays '
+        'on your device, with no account and no server.',
+  ],
+
+  // Tesbih
+  'target_reached': ['Ziel erreicht', 'Hedefe ulaşıldı', 'Target reached'],
+  'sub_meet': ['Verabreden', 'Buluşma', 'Meet up'],
+  'meet_locked': [
+    'Bald könnt ihr euch hier zum gemeinsamen Gebet verabreden: eine Moschee und eine '
+        'Zeit vorschlagen, abstimmen, zu- oder absagen. Der Vorschlag mit den meisten '
+        'Stimmen steht oben.',
+    'Yakında burada cemaatle namaz için buluşma ayarlayabileceksiniz: bir cami ve saat '
+        'öner, oy ver, katıl ya da iptal et. En çok oy alan öneri en üstte olur.',
+    'Soon you will be able to arrange congregational prayer here: propose a mosque and a '
+        'time, vote, accept or decline. The proposal with the most votes stays on top.',
+  ],
+  'notifications': ['Benachrichtigungen', 'Bildirimler', 'Notifications'],
+  'notifications_locked': [
+    'Erinnerungen zu den Gebetszeiten folgen im nächsten Update.',
+    'Namaz vakti hatırlatmaları bir sonraki güncellemede geliyor.',
+    'Prayer time reminders are coming in the next update.',
+  ],
+  'tap_anywhere': [
+    'Tippe auf die Perlen oder in das untere Drittel des Bildschirms',
+    'Boncuklara veya ekranın alt üçte birine dokun',
+    'Tap the beads or the lower third of the screen',
+  ],
 };
 
 String tr(String key) {
@@ -548,6 +657,23 @@ class Mosque {
         website: j['w'] as String?,
         openingHours: j['o'] as String?,
       );
+}
+
+extension FriendStats on Friend {
+  int totalOver(int days) {
+    final today = DateTime.now();
+    var sum = 0;
+    for (var i = 0; i < days; i++) {
+      final d = today.subtract(Duration(days: i));
+      final key = '${d.year.toString().padLeft(4, '0')}-'
+          '${d.month.toString().padLeft(2, '0')}-'
+          '${d.day.toString().padLeft(2, '0')}';
+      sum += days == 0 ? 0 : (this.days[key] ?? 0);
+    }
+    return sum;
+  }
+
+  double averageOver(int days) => days == 0 ? 0 : totalOver(days) / days;
 }
 
 class Friend {
@@ -828,6 +954,7 @@ class AppState extends ChangeNotifier {
   int tasbihCount = 0, tasbihTarget = 33, dhikrIndex = 0;
 
   // Kerahat
+  bool tutorialDone = false;
   bool showKerahat = false;
   int kerahatSunriseMin = 45;
   int kerahatIstivaMin = 15;
@@ -875,6 +1002,7 @@ class AppState extends ChangeNotifier {
       refMosque = Mosque.fromJson(jsonDecode(rm) as Map<String, dynamic>);
     }
     userName = _p.getString('userName') ?? '';
+    tutorialDone = _p.getBool('tutorialDone') ?? false;
     showKerahat = _p.getBool('showKerahat') ?? false;
     kerahatSunriseMin = _p.getInt('kSunrise') ?? 45;
     kerahatIstivaMin = _p.getInt('kIstiva') ?? 15;
@@ -955,6 +1083,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void finishTutorial() {
+    tutorialDone = true;
+    _p.setBool('tutorialDone', true);
+    notifyListeners();
+  }
+
   void setShowKerahat(bool v) {
     showKerahat = v;
     _p.setBool('showKerahat', v);
@@ -1018,10 +1152,17 @@ class AppState extends ChangeNotifier {
   }
 
   // --- Tesbih ---
+  bool get tasbihAtTarget => tasbihTarget > 0 && tasbihCount >= tasbihTarget;
+
+  /// Zählt hoch und bleibt beim eingestellten Ziel stehen — Zurücksetzen von Hand.
   void tasbihIncrement() {
+    if (tasbihAtTarget) {
+      HapticFeedback.heavyImpact();
+      return;
+    }
     tasbihCount++;
     _p.setInt('tasbihCount', tasbihCount);
-    if (tasbihTarget > 0 && tasbihCount % tasbihTarget == 0) {
+    if (tasbihAtTarget) {
       HapticFeedback.heavyImpact();
     } else {
       HapticFeedback.selectionClick();
@@ -1038,6 +1179,10 @@ class AppState extends ChangeNotifier {
   void setTasbihTarget(int v) {
     tasbihTarget = v;
     _p.setInt('tasbihTarget', v);
+    if (tasbihCount > v) {
+      tasbihCount = v;
+      _p.setInt('tasbihCount', v);
+    }
     notifyListeners();
   }
 
@@ -1090,15 +1235,24 @@ class AppState extends ChangeNotifier {
     return List.generate(7, (i) => prayedCount(today.subtract(Duration(days: 6 - i))));
   }
 
+  List<int> get lastThirtyDays {
+    final today = DateTime.now();
+    return List.generate(30, (i) => prayedCount(today.subtract(Duration(days: 29 - i))));
+  }
+
   int get weekTotal => lastSevenDays.fold(0, (a, b) => a + b);
+  int get monthTotal => lastThirtyDays.fold(0, (a, b) => a + b);
+  double get weekAverage => weekTotal / 7;
+  double get monthAverage => monthTotal / 30;
 
   /// Kompakter Code zum Teilen — enthält nur Name und Tageszahlen.
   String buildShareCode() {
     final today = DateTime.now();
     final days = <String, int>{};
-    for (var i = 0; i < 7; i++) {
-      final d = today.subtract(Duration(days: 6 - i));
-      days[dayKey(d)] = prayedCount(d);
+    for (var i = 0; i < 30; i++) {
+      final d = today.subtract(Duration(days: 29 - i));
+      final c = prayedCount(d);
+      if (c > 0) days[dayKey(d)] = c;
     }
     final payload = jsonEncode({
       'v': 1,
@@ -1137,16 +1291,17 @@ class AppState extends ChangeNotifier {
 
   String buildInviteText() {
     final name = userName.isEmpty ? '' : '$userName ';
+    final code = buildShareCode();
     return switch (lang) {
       AppLang.de =>
-        '${name}lädt dich zu Nur Islam ein — Gebetszeiten, Qibla und Tesbih, '
-            'kostenlos und ohne Konto.\n$kAppShareUrl',
+        '${name}lädt dich zu Nur Islam ein — Gebetszeiten, Qibla und Tesbih, kostenlos '
+            'und ohne Konto.\n\nMein Code zum Einfügen in der App:\n$code',
       AppLang.tr =>
         '$name seni Nur Islam\'a davet ediyor — namaz vakitleri, kıble ve tesbih, '
-            'ücretsiz ve hesapsız.\n$kAppShareUrl',
+            'ücretsiz ve hesapsız.\n\nUygulamaya yapıştırılacak kodum:\n$code',
       AppLang.en =>
-        '${name}invites you to Nur Islam — prayer times, qibla and tasbih, '
-            'free and without an account.\n$kAppShareUrl',
+        '${name}invites you to Nur Islam — prayer times, qibla and tasbih, free and '
+            'without an account.\n\nMy code to paste into the app:\n$code',
     };
   }
 
@@ -1620,6 +1775,13 @@ class _RootShellState extends State<RootShell> {
       if (appState.locState != LocState.ready && !appState.manualLocation) {
         appState.refreshLocation();
       }
+      if (!appState.tutorialDone && mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const OnboardingDialog(),
+        );
+      }
     });
   }
 
@@ -1633,7 +1795,7 @@ class _RootShellState extends State<RootShell> {
           MosquesTab(),
           QiblaTab(),
           TasbihTab(),
-          MoreTab(),
+          CommunityPage(),
         ];
         return Scaffold(
           body: SafeArea(bottom: false, child: pages[_index]),
@@ -1662,9 +1824,9 @@ class _RootShellState extends State<RootShell> {
                 label: tr('tab_tools'),
               ),
               NavigationDestination(
-                icon: const Icon(Icons.more_horiz),
-                selectedIcon: const Icon(Icons.more_horiz),
-                label: tr('tab_more'),
+                icon: const Icon(Icons.groups_outlined),
+                selectedIcon: const Icon(Icons.groups),
+                label: tr('tab_community'),
               ),
             ],
           ),
@@ -1797,12 +1959,9 @@ class _TimesTabState extends State<TimesTab> {
   }
 
   Future<void> _pickDay() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selected,
-      firstDate: DateTime(_now.year - 2),
-      lastDate: DateTime(_now.year + 2),
-      helpText: tr('pick_day'),
+    final picked = await Navigator.push<DateTime>(
+      context,
+      MaterialPageRoute(builder: (_) => CalendarPage(initial: _selected)),
     );
     if (picked != null) setState(() => _selected = picked);
   }
@@ -2029,6 +2188,12 @@ class _DayHeader extends StatelessWidget {
                 TextButton(onPressed: onToday, child: Text(tr('today_button')))
               else
                 IconButton(onPressed: onPick, icon: const Icon(Icons.calendar_month_outlined)),
+              IconButton(
+                onPressed: () => Navigator.push(
+                    context, MaterialPageRoute(builder: (_) => const MoreTab())),
+                icon: const Icon(Icons.settings_outlined),
+                tooltip: tr('tab_settings'),
+              ),
             ],
           ),
         ],
@@ -2728,9 +2893,11 @@ class _QiblaTabState extends State<QiblaTab> {
   /// 0 = weit weg, 1 = genau ausgerichtet. Ab 60° Abweichung bleibt es dunkel.
   double _glow(double? delta) {
     if (delta == null) return 0;
-    final d = delta.abs().clamp(0.0, 60.0);
+    final a = delta.abs();
+    if (a <= _tolerance) return 1.0; // im Zielbereich volle Helligkeit
+    final d = a.clamp(0.0, 60.0);
     final v = 1 - d / 60.0;
-    return v * v; // quadratisch, damit es erst nah am Ziel deutlich aufleuchtet
+    return (v * v * 0.85).clamp(0.0, 0.85);
   }
 
   @override
@@ -2824,10 +2991,16 @@ class _QiblaTabState extends State<QiblaTab> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: pal.gold.withValues(alpha: 0.55 * _glow(delta)),
-                      blurRadius: 26 + 34 * _glow(delta),
-                      spreadRadius: 2 + 10 * _glow(delta),
+                      color: pal.gold.withValues(alpha: 0.75 * _glow(delta)),
+                      blurRadius: 24 + 56 * _glow(delta),
+                      spreadRadius: 2 + 18 * _glow(delta),
                     ),
+                    if (aligned)
+                      BoxShadow(
+                        color: pal.accent.withValues(alpha: 0.45),
+                        blurRadius: 90,
+                        spreadRadius: 12,
+                      ),
                   ],
                 ),
               ),
@@ -3161,10 +3334,11 @@ class TasbihTab extends StatelessWidget {
     final rounds = target > 0 ? count ~/ target : 0;
 
 
-    return ListView(
+    return Stack(children: [
+      ListView(
       padding: const EdgeInsets.only(bottom: 32),
       children: [
-        PageHeader(title: tr('tasbih_title'), subtitle: tr('tasbih_tap')),
+        PageHeader(title: tr('tasbih_title'), subtitle: tr('tap_anywhere')),
         const SizedBox(height: 8),
         SizedBox(
           height: 44,
@@ -3193,7 +3367,7 @@ class TasbihTab extends StatelessWidget {
                   size: const Size(300, 320),
                   painter: TasbihPainter(
                     beadCount: target > 33 ? 33 : target,
-                    filled: target > 33 ? inRound % 33 : inRound,
+                    filled: target > 33 ? (inRound == 0 && count > 0 ? 33 : inRound % 33) : inRound,
                     gold: pal.gold,
                     bead: pal.primary,
                     accent: pal.accent,
@@ -3233,12 +3407,30 @@ class TasbihTab extends StatelessWidget {
               ),
             ),
           const SizedBox(width: 12),
-          OutlinedButton.icon(
+          FilledButton.icon(
             onPressed: appState.tasbihReset,
             icon: const Icon(Icons.refresh, size: 18),
             label: Text(tr('tasbih_reset')),
           ),
         ]),
+        if (appState.tasbihAtTarget) ...[
+          const SizedBox(height: 14),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: pal.gold.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.check_circle, size: 16, color: pal.gold),
+                const SizedBox(width: 8),
+                Text('${tr('target_reached')} · $target',
+                    style: TextStyle(color: pal.gold, fontWeight: FontWeight.w600)),
+              ]),
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -3246,8 +3438,21 @@ class TasbihTab extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ),
+        const SizedBox(height: 90),
       ],
-    );
+      ),
+      // Unteres Drittel des Bildschirms zaehlt ebenfalls mit
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: MediaQuery.of(context).size.height / 3,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: appState.tasbihIncrement,
+        ),
+      ),
+    ]);
   }
 }
 
@@ -3261,7 +3466,9 @@ class MoreTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListView(
+    return Scaffold(
+      appBar: AppBar(title: Text(tr('tab_more'))),
+      body: ListView(
       padding: const EdgeInsets.only(bottom: 32),
       children: [
         PageHeader(title: tr('tab_more')),
@@ -3294,35 +3501,8 @@ class MoreTab extends StatelessWidget {
                 onTap: () => Navigator.push(
                     context, MaterialPageRoute(builder: (_) => const LocationPickerPage())),
               ),
-              const Divider(height: 1),
-              ListTile(
-                enabled: false,
-                leading: Icon(Icons.lock_outline, color: pal.gold),
-                title: Text(tr('tab_qa')),
-                subtitle: Text(tr('coming_soon')),
-                trailing: Icon(Icons.lock, size: 18, color: pal.gold),
-              ),
             ]),
           ),
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: Container(
-            width: 92,
-            height: 92,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: theme.colorScheme.surfaceContainerHighest,
-              border: Border.all(color: pal.gold.withValues(alpha: 0.6), width: 1.5),
-            ),
-            child: Icon(Icons.lock_outline, size: 40, color: pal.gold),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 34),
-          child: Text(tr('qa_locked_body'),
-              textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
         ),
         const SizedBox(height: 26),
         Padding(
@@ -3340,10 +3520,11 @@ class MoreTab extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Center(
-          child: Text('Nur Islam · 3.0.0',
+          child: Text('Nur Islam · 4.0.0',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ),
       ],
+      ),
     );
   }
 }
@@ -3522,6 +3703,20 @@ class SettingsPage extends StatelessWidget {
                           context, MaterialPageRoute(builder: (_) => const AnglesPage())),
                     ),
                   ]),
+                ),
+              ),
+
+              _section(context, tr('notifications')),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Card(
+                  child: ListTile(
+                    enabled: false,
+                    leading: Icon(Icons.notifications_none, color: pal.gold),
+                    title: Text(tr('notifications')),
+                    subtitle: Text('${tr('coming_soon')} · ${tr('notifications_locked')}'),
+                    trailing: Icon(Icons.lock, size: 18, color: pal.gold),
+                  ),
                 ),
               ),
 
@@ -4446,6 +4641,636 @@ class MosqueDetailPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// =============================================================================
+//  20. Hidschri-Kalender und besondere Tage
+// =============================================================================
+
+class Hijri {
+  final int year, month, day;
+  const Hijri(this.year, this.month, this.day);
+
+  /// Umrechnung nach dem tabellarischen Verfahren. Kann um einen Tag abweichen.
+  static Hijri fromDate(DateTime date) {
+    int d = date.day, m = date.month, y = date.year;
+    int jd;
+    if ((y > 1582) || (y == 1582 && m > 10) || (y == 1582 && m == 10 && d > 14)) {
+      jd = ((1461 * (y + 4800 + ((m - 14) ~/ 12))) ~/ 4) +
+          ((367 * (m - 2 - 12 * ((m - 14) ~/ 12))) ~/ 12) -
+          ((3 * ((y + 4900 + ((m - 14) ~/ 12)) ~/ 100)) ~/ 4) +
+          d - 32075;
+    } else {
+      jd = 367 * y -
+          ((7 * (y + 5001 + ((m - 9) ~/ 7))) ~/ 4) +
+          ((275 * m) ~/ 9) + d + 1729777;
+    }
+    int l = jd - 1948440 + 10632;
+    final n = (l - 1) ~/ 10631;
+    l = l - 10631 * n + 354;
+    final j = ((10985 - l) ~/ 5316) * ((50 * l) ~/ 17719) + (l ~/ 5670) * ((43 * l) ~/ 15238);
+    l = l - ((30 - j) ~/ 15) * ((17719 * j) ~/ 50) - (j ~/ 16) * ((15238 * j) ~/ 43) + 29;
+    final mm = (24 * l) ~/ 709;
+    final dd = l - ((709 * mm) ~/ 24);
+    final yy = 30 * n + j - 30;
+    return Hijri(yy, mm, dd);
+  }
+
+  static const List<String> monthsTr = [
+    'Muharrem', 'Safer', 'Rebiülevvel', 'Rebiülahir', 'Cemaziyelevvel', 'Cemaziyelahir',
+    'Recep', 'Şaban', 'Ramazan', 'Şevval', 'Zilkade', 'Zilhicce',
+  ];
+
+  String get label => '$day ${monthsTr[(month - 1).clamp(0, 11)]} $year';
+}
+
+/// Ein besonderer Tag im islamischen Kalender.
+class SpecialDay {
+  final String nameDe, nameTr, nameEn;
+  final int hijriMonth, hijriDay, lengthDays;
+  final bool major; // Bayram und Ramazan werden kräftiger markiert
+  const SpecialDay(this.nameDe, this.nameTr, this.nameEn, this.hijriMonth, this.hijriDay,
+      {this.lengthDays = 1, this.major = false});
+
+  String get name => switch (appState.lang) {
+        AppLang.de => nameDe,
+        AppLang.tr => nameTr,
+        AppLang.en => nameEn,
+      };
+}
+
+const List<SpecialDay> kSpecialDays = [
+  SpecialDay('Islamisches Neujahr', 'Hicri Yılbaşı', 'Islamic New Year', 1, 1),
+  SpecialDay('Aschura', 'Aşure Günü', 'Ashura', 1, 10),
+  SpecialDay('Mevlid-Nacht', 'Mevlid Kandili', 'Mawlid', 3, 12),
+  SpecialDay('Mirac-Nacht', 'Miraç Kandili', 'Isra and Miraj', 7, 27),
+  SpecialDay('Berat-Nacht', 'Berat Kandili', 'Mid-Sha\'ban', 8, 15),
+  SpecialDay('Ramadan', 'Ramazan', 'Ramadan', 9, 1, lengthDays: 29, major: true),
+  SpecialDay('Nacht der Bestimmung', 'Kadir Gecesi', 'Laylat al-Qadr', 9, 27),
+  SpecialDay('Ramadanfest', 'Ramazan Bayramı', 'Eid al-Fitr', 10, 1, lengthDays: 3, major: true),
+  SpecialDay('Arafat-Tag', 'Arefe', 'Day of Arafah', 12, 9),
+  SpecialDay('Opferfest', 'Kurban Bayramı', 'Eid al-Adha', 12, 10, lengthDays: 4, major: true),
+];
+
+/// Welcher besondere Tag fällt auf dieses Datum? Gibt zusätzlich zurück, ob es
+/// der erste bzw. letzte Tag eines mehrtägigen Zeitraums ist.
+({SpecialDay day, bool first, bool last})? specialFor(DateTime date) {
+  final h = Hijri.fromDate(date);
+  for (final e in kSpecialDays) {
+    if (e.hijriMonth != h.month) continue;
+    final offset = h.day - e.hijriDay;
+    if (offset >= 0 && offset < e.lengthDays) {
+      return (day: e, first: offset == 0, last: offset == e.lengthDays - 1);
+    }
+  }
+  return null;
+}
+
+class CalendarPage extends StatefulWidget {
+  final DateTime initial;
+  const CalendarPage({super.key, required this.initial});
+  @override
+  State<CalendarPage> createState() => _CalendarPageState();
+}
+
+class _CalendarPageState extends State<CalendarPage> {
+  late DateTime _month = DateTime(widget.initial.year, widget.initial.month);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final first = DateTime(_month.year, _month.month, 1);
+    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
+    final leading = first.weekday - 1; // Montag = 0
+    final cells = <DateTime?>[
+      ...List.filled(leading, null),
+      ...List.generate(daysInMonth, (i) => DateTime(_month.year, _month.month, i + 1)),
+    ];
+    final today = DateTime.now();
+
+    final monthEvents = <String, SpecialDay>{};
+    for (var i = 1; i <= daysInMonth; i++) {
+      final sp = specialFor(DateTime(_month.year, _month.month, i));
+      if (sp != null) monthEvents[sp.day.name] = sp.day;
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text(tr('calendar'))),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Row(children: [
+            IconButton(
+              onPressed: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
+              icon: const Icon(Icons.chevron_left),
+            ),
+            Expanded(
+              child: Column(children: [
+                Text('${_months[appState.lang]![_month.month - 1]} ${_month.year}',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                Text(Hijri.fromDate(DateTime(_month.year, _month.month, 15)).label,
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: theme.colorScheme.outline)),
+              ]),
+            ),
+            IconButton(
+              onPressed: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              for (final w in _weekdaysShort[appState.lang]!)
+                Expanded(
+                  child: Center(
+                    child: Text(w,
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: theme.colorScheme.outline)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: 0.78,
+            ),
+            itemCount: cells.length,
+            itemBuilder: (context, i) {
+              final d = cells[i];
+              if (d == null) return const SizedBox.shrink();
+              final sp = specialFor(d);
+              final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
+              final isSelected = d.year == widget.initial.year &&
+                  d.month == widget.initial.month &&
+                  d.day == widget.initial.day;
+              return _CalendarCell(
+                date: d,
+                special: sp,
+                isToday: isToday,
+                isSelected: isSelected,
+                onTap: () => Navigator.pop(context, d),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          if (monthEvents.isNotEmpty) ...[
+            Text(tr('special_days'), style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Card(
+              child: Column(children: [
+                for (final e in monthEvents.values)
+                  ListTile(
+                    dense: true,
+                    leading: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: e.major ? pal.gold : pal.accent,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    title: Text(e.name),
+                    subtitle: e.lengthDays > 1
+                        ? Text('${e.lengthDays} ${tr('days')}')
+                        : null,
+                  ),
+              ]),
+            ),
+            const SizedBox(height: 14),
+          ],
+          Text(tr('hijri_note'),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(height: 1.5, color: theme.colorScheme.outline)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarCell extends StatelessWidget {
+  final DateTime date;
+  final ({SpecialDay day, bool first, bool last})? special;
+  final bool isToday, isSelected;
+  final VoidCallback onTap;
+  const _CalendarCell({
+    required this.date,
+    required this.special,
+    required this.isToday,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final sp = special;
+    final multi = sp != null && sp.day.lengthDays > 1;
+    final colour = sp == null ? null : (sp.day.major ? pal.gold : pal.accent);
+
+    // Mehrtägige Zeiträume bekommen ein durchgehendes Band,
+    // damit man sofort sieht, dass die Tage zusammengehören.
+    final radius = BorderRadius.horizontal(
+      left: Radius.circular(multi && !sp.first ? 0 : 10),
+      right: Radius.circular(multi && !sp.last ? 0 : 10),
+    );
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: multi ? 0 : 2, vertical: 2),
+        decoration: BoxDecoration(
+          color: colour?.withValues(alpha: multi ? 0.20 : 0.28),
+          borderRadius: radius,
+          border: isSelected
+              ? Border.all(color: theme.colorScheme.primary, width: 1.6)
+              : (isToday ? Border.all(color: pal.gold, width: 1.2) : null),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('${date.day}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: isToday || sp != null ? FontWeight.w700 : FontWeight.w400)),
+            Text('${Hijri.fromDate(date).day}',
+                style: theme.textTheme.labelSmall
+                    ?.copyWith(fontSize: 9, color: theme.colorScheme.outline)),
+            if (sp != null && !multi)
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(color: colour, shape: BoxShape.circle),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+//  21. Community
+// =============================================================================
+
+class CommunityPage extends StatelessWidget {
+  const CommunityPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 4,
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(tr('tab_community'),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+          ),
+        ),
+        TabBar(
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelColor: pal.gold,
+          indicatorColor: pal.gold,
+          tabs: [
+            Tab(text: tr('sub_friends'), icon: const Icon(Icons.groups_outlined, size: 16)),
+            Tab(text: tr('sub_news'), icon: const Icon(Icons.lock_outline, size: 16)),
+            Tab(text: tr('sub_meet'), icon: const Icon(Icons.lock_outline, size: 16)),
+            Tab(text: tr('sub_qa'), icon: const Icon(Icons.lock_outline, size: 16)),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(children: [
+            const FriendsFeed(),
+            _LockedPane(text: tr('news_locked')),
+            _LockedPane(text: tr('meet_locked')),
+            _LockedPane(text: tr('qa_locked_body')),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _LockedPane extends StatelessWidget {
+  final String text;
+  const _LockedPane({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(28),
+      children: [
+        const SizedBox(height: 30),
+        Center(
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.surfaceContainerHighest,
+              border: Border.all(color: pal.gold.withValues(alpha: 0.6), width: 1.5),
+            ),
+            child: Icon(Icons.lock_outline, size: 42, color: pal.gold),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            decoration: BoxDecoration(
+              color: pal.gold.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(tr('coming_soon'),
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700, color: pal.gold)),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(text, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(height: 1.55)),
+      ],
+    );
+  }
+}
+
+/// Freundes-Feed mit Durchschnitten und Rangliste.
+class FriendsFeed extends StatelessWidget {
+  const FriendsFeed({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final rows = <({String name, int week, int month, bool me})>[
+      (
+        name: appState.userName.isEmpty ? tr('me') : appState.userName,
+        week: appState.weekTotal,
+        month: appState.monthTotal,
+        me: true,
+      ),
+      ...appState.friends.map((f) => (
+            name: f.name,
+            week: f.totalOver(7),
+            month: f.totalOver(30),
+            me: false,
+          )),
+    ]..sort((a, b) => b.month.compareTo(a.month));
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      children: [
+        // Eigene Zahlen
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(tr('avg_week'), style: theme.textTheme.labelMedium),
+                  const SizedBox(height: 4),
+                  Text('${appState.weekAverage.toStringAsFixed(1)} ${tr('per_day')}',
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                ]),
+              ),
+              Container(width: 1, height: 38, color: theme.colorScheme.outlineVariant),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(tr('avg_month'), style: theme.textTheme.labelMedium),
+                  const SizedBox(height: 4),
+                  Text('${appState.monthAverage.toStringAsFixed(1)} ${tr('per_day')}',
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(tr('ranking'), style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Card(
+          child: Column(children: [
+            for (var i = 0; i < rows.length; i++) ...[
+              if (i > 0) const Divider(height: 1),
+              _RankRow(rank: i + 1, row: rows[i]),
+            ],
+            if (appState.friends.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(tr('friends_none'),
+                    textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
+              ),
+          ]),
+        ),
+        const SizedBox(height: 20),
+        Text(tr('my_code'), style: theme.textTheme.titleSmall),
+        const SizedBox(height: 4),
+        Text(tr('my_code_hint'),
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: () => copyToClipboard(context, appState.buildInviteText()),
+              icon: const Icon(Icons.person_add_alt, size: 18),
+              label: Text(tr('invite_friend')),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => copyToClipboard(context, appState.buildShareCode()),
+              icon: const Icon(Icons.ios_share, size: 18),
+              label: Text(tr('share_progress')),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.push(
+              context, MaterialPageRoute(builder: (_) => const FriendsPage())),
+          icon: const Icon(Icons.settings_outlined, size: 18),
+          label: Text(tr('friends')),
+        ),
+        const SizedBox(height: 18),
+        Text(tr('no_server_note'),
+            style: theme.textTheme.bodySmall
+                ?.copyWith(height: 1.5, color: theme.colorScheme.outline)),
+      ],
+    );
+  }
+}
+
+class _RankRow extends StatelessWidget {
+  final int rank;
+  final ({String name, int week, int month, bool me}) row;
+  const _RankRow({required this.rank, required this.row});
+
+  static const Color gold = Color(0xFFD4AF37);
+  static const Color silver = Color(0xFFB9BFC7);
+  static const Color bronze = Color(0xFFB07A45);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final medal = switch (rank) {
+      1 => gold,
+      2 => silver,
+      3 => bronze,
+      _ => null,
+    };
+
+    return ListTile(
+      leading: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: medal?.withValues(alpha: 0.22) ?? theme.colorScheme.surfaceContainerHighest,
+          border: medal == null ? null : Border.all(color: medal, width: 1.6),
+        ),
+        alignment: Alignment.center,
+        child: Text('$rank',
+            style: TextStyle(
+                fontWeight: FontWeight.w700, color: medal ?? theme.colorScheme.onSurface)),
+      ),
+      title: Text(row.name,
+          style: TextStyle(fontWeight: row.me ? FontWeight.w700 : FontWeight.w500)),
+      subtitle: Text('${tr('week')}: ${row.week} · 30 ${tr('days')}: ${row.month}'),
+      trailing: Text('${(row.month / 30).toStringAsFixed(1)}',
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+// =============================================================================
+//  22. Tutorial beim ersten Start
+// =============================================================================
+
+class OnboardingDialog extends StatefulWidget {
+  const OnboardingDialog({super.key});
+  @override
+  State<OnboardingDialog> createState() => _OnboardingDialogState();
+}
+
+class _OnboardingDialogState extends State<OnboardingDialog> {
+  final _controller = PageController();
+  int _page = 0;
+
+  static const _pages = [
+    ('tut1_t', 'tut1_b', Icons.nightlight_round),
+    ('tut2_t', 'tut2_b', Icons.swipe),
+    ('tut3_t', 'tut3_b', Icons.mosque_outlined),
+    ('tut4_t', 'tut4_b', Icons.explore_outlined),
+    ('tut5_t', 'tut5_b', Icons.groups_outlined),
+  ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _finish() {
+    appState.finishTutorial();
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLast = _page == _pages.length - 1;
+
+    return Dialog(
+      insetPadding: const EdgeInsets.all(24),
+      child: SizedBox(
+        height: 430,
+        child: Column(children: [
+          Expanded(
+            child: PageView.builder(
+              controller: _controller,
+              onPageChanged: (i) => setState(() => _page = i),
+              itemCount: _pages.length,
+              itemBuilder: (context, i) {
+                final p = _pages[i];
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 34, 28, 10),
+                  child: Column(children: [
+                    Container(
+                      width: 92,
+                      height: 92,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(colors: [pal.primary, pal.deep]),
+                        border: Border.all(color: pal.gold.withValues(alpha: 0.6)),
+                      ),
+                      child: Icon(p.$3, size: 42, color: pal.gold),
+                    ),
+                    const SizedBox(height: 22),
+                    Text(tr(p.$1),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 12),
+                    Text(tr(p.$2),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+                  ]),
+                );
+              },
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < _pages.length; i++)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == _page ? 18 : 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: i == _page ? pal.gold : theme.colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            child: Row(children: [
+              TextButton(onPressed: _finish, child: Text(tr('skip'))),
+              const Spacer(),
+              FilledButton(
+                onPressed: () {
+                  if (isLast) {
+                    _finish();
+                  } else {
+                    _controller.nextPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                },
+                child: Text(isLast ? tr('start') : tr('next')),
+              ),
+            ]),
+          ),
+        ]),
+      ),
     );
   }
 }
