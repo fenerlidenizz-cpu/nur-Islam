@@ -25,6 +25,9 @@ dependencies:
   # Optionaler Diyanet-Feinabgleich (Monatskalender, danach offline)
   http: ^1.2.2
 
+  # Karten-App und Links oeffnen
+  url_launcher: ^6.3.1
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
