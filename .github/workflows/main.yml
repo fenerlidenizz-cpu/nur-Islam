@@ -1,9 +1,8 @@
-# Diese Datei wird auf GitHub unter "Actions" eingefuegt.
+# Diese Datei liegt auf GitHub unter .github/workflows/main.yml
 # Sie baut die fertige APK und legt sie unter "Artifacts" zum Download ab.
 #
-# Die Dateien main.dart und pubspec.yaml duerfen einfach im Hauptverzeichnis
-# des Repositories liegen - der Workflow sortiert sie selbst an die
-# richtige Stelle und erzeugt das Android-Projekt.
+# main.dart und pubspec.yaml duerfen im Hauptverzeichnis liegen —
+# der Workflow sortiert sie selbst ein und erzeugt das Android-Projekt.
 
 name: Build APK
 
@@ -21,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Java einrichten
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -56,68 +55,82 @@ jobs:
           cp /tmp/keep/pubspec.yaml pubspec.yaml
           cp /tmp/keep/main.dart lib/main.dart
 
-      - name: Berechtigungen in das Manifest eintragen
+      - name: Berechtigungen und App-Name eintragen
         run: |
           MANIFEST=android/app/src/main/AndroidManifest.xml
           if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
             sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />\n    <queries>\n        <intent>\n            <action android:name="android.intent.action.VIEW" />\n            <data android:scheme="https" />\n        </intent>\n    </queries>\n    <application#' "$MANIFEST"
           fi
-          cat "$MANIFEST"
-
-      - name: App-Namen setzen
-        run: |
-          MANIFEST=android/app/src/main/AndroidManifest.xml
           sed -i 's#android:label="[^"]*"#android:label="Nur Islam"#' "$MANIFEST"
           grep -o 'android:label="[^"]*"' "$MANIFEST"
 
+      # Darf fehlschlagen — dann bleibt einfach das Standard-Symbol.
       - name: App-Symbol erzeugen (goldener Halbmond auf Lila)
+        continue-on-error: true
         run: |
-          pip install --quiet pillow
+          python3 -m pip install --break-system-packages --quiet pillow \
+            || python3 -m pip install --quiet pillow \
+            || pip3 install --quiet pillow
           mkdir -p assets/icon
-          python3 - <<'ICON'
+          cat > make_icon.py <<'PYEOF'
           from PIL import Image, ImageDraw
+
           S = 1024
           img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
           d = ImageDraw.Draw(img)
-          # Hintergrund im Aubergine-Farbton der App
-          d.rounded_rectangle([0, 0, S, S], radius=int(S*0.22), fill=(61, 44, 82, 255))
-          d.rounded_rectangle([0, 0, S, S], radius=int(S*0.22),
-                              outline=(201, 162, 39, 120), width=int(S*0.012))
+
+          # Hintergrund im Aubergine-Ton der App
+          d.rounded_rectangle([0, 0, S - 1, S - 1], radius=int(S * 0.22), fill=(61, 44, 82, 255))
+          d.rounded_rectangle([0, 0, S - 1, S - 1], radius=int(S * 0.22),
+                              outline=(201, 162, 39, 130), width=int(S * 0.012))
+
           # Halbmond: grosser Kreis minus versetzter Kreis
-          moon = Image.new("L", (S, S), 0)
-          md = ImageDraw.Draw(moon)
-          r = int(S*0.30)
-          cx, cy = int(S*0.52), int(S*0.50)
-          md.ellipse([cx-r, cy-r, cx+r, cy+r], fill=255)
-          r2 = int(r*0.86)
-          cx2, cy2 = cx + int(r*0.34), cy - int(r*0.12)
-          md.ellipse([cx2-r2, cy2-r2, cx2+r2, cy2+r2], fill=0)
+          mask = Image.new("L", (S, S), 0)
+          m = ImageDraw.Draw(mask)
+          r = int(S * 0.30)
+          cx, cy = int(S * 0.52), int(S * 0.50)
+          m.ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
+          r2 = int(r * 0.86)
+          cx2, cy2 = cx + int(r * 0.34), cy - int(r * 0.12)
+          m.ellipse([cx2 - r2, cy2 - r2, cx2 + r2, cy2 + r2], fill=0)
+
           gold = Image.new("RGBA", (S, S), (212, 175, 55, 255))
-          img.paste(gold, (0, 0), moon)
-          # kleiner Stern
-          sr = int(S*0.055)
-          sx, sy = int(S*0.70), int(S*0.34)
-          d.regular_polygon((sx, sy, sr), 5, rotation=-18, fill=(212, 175, 55, 255))
+          img.paste(gold, (0, 0), mask)
+
+          # kleiner Stern in der Mondsichel
+          try:
+              d.regular_polygon((int(S * 0.70), int(S * 0.34), int(S * 0.055)), 5,
+                                rotation=-18, fill=(212, 175, 55, 255))
+          except Exception:
+              pass
+
           img.save("assets/icon/icon.png")
           print("Symbol erzeugt")
-          ICON
+          PYEOF
+          python3 make_icon.py
+          rm -f make_icon.py
           ls -l assets/icon
 
-      - name: Symbol in das Projekt einbauen
+      - name: Symbol einbauen
+        continue-on-error: true
         run: |
+          if [ ! -f assets/icon/icon.png ]; then
+            echo "Kein Symbol vorhanden - Schritt wird uebersprungen."
+            exit 0
+          fi
+          cp pubspec.yaml /tmp/keep/pubspec.before-icon.yaml
           flutter pub add --dev flutter_launcher_icons
-          cat >> pubspec.yaml <<'CFG'
+          cat >> pubspec.yaml <<'CFGEOF'
 
           flutter_launcher_icons:
             android: true
-            ios: true
+            ios: false
             image_path: "assets/icon/icon.png"
             adaptive_icon_background: "#3D2C52"
             adaptive_icon_foreground: "assets/icon/icon.png"
-            remove_alpha_ios: true
-          CFG
+          CFGEOF
           flutter pub get
-          dart run flutter_launcher_icons
+          dart run flutter_launcher_icons || cp /tmp/keep/pubspec.before-icon.yaml pubspec.yaml
 
       - name: Abhaengigkeiten laden
         run: flutter pub get
