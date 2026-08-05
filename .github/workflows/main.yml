@@ -60,7 +60,7 @@ jobs:
         run: |
           MANIFEST=android/app/src/main/AndroidManifest.xml
           if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
-            sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />\n    <application#' "$MANIFEST"
+            sed -i 's#<application#<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />\n    <queries>\n        <intent>\n            <action android:name="android.intent.action.VIEW" />\n            <data android:scheme="https" />\n        </intent>\n    </queries>\n    <application#' "$MANIFEST"
           fi
           cat "$MANIFEST"
 
