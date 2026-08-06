@@ -132,6 +132,391 @@ jobs:
           flutter pub get
           dart run flutter_launcher_icons || cp /tmp/keep/pubspec.before-icon.yaml pubspec.yaml
 
+      # Startbildschirm-Widgets: nativer Android-Teil.
+      # Darf fehlschlagen - dann baut die App ohne Widgets weiter.
+      - name: Widgets einbauen
+        continue-on-error: true
+        run: |
+          set -e
+          PKG=android/app/src/main/kotlin/com/nurislam/nur_islam
+          RES=android/app/src/main/res
+          mkdir -p "$PKG" "$RES/layout" "$RES/xml" "$RES/drawable"
+
+          cat > "$RES/drawable/widget_bg.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android"
+              android:shape="rectangle">
+              <corners android:radius="20dp" />
+              <solid android:color="#FFFFFFFF" />
+          </shape>
+          XML
+
+          cat > "$RES/layout/widget_times.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/times_root"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+              <ImageView
+                  android:id="@+id/times_bg"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:scaleType="fitXY"
+                  android:src="@drawable/widget_bg"
+                  android:contentDescription="@null" />
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:orientation="vertical"
+                  android:padding="10dp">
+
+                  <TextView
+                      android:id="@+id/times_header"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:maxLines="1"
+                      android:ellipsize="end"
+                      android:textSize="10sp"
+                      android:textColor="#CCFFFFFF" />
+
+                  <LinearLayout
+                      android:layout_width="match_parent"
+                      android:layout_height="0dp"
+                      android:layout_weight="1"
+                      android:orientation="horizontal"
+                      android:gravity="center_vertical">
+
+                      <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                          android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                          <TextView android:id="@+id/n1" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="9sp"
+                              android:maxLines="1" android:textColor="#B3FFFFFF" />
+                          <TextView android:id="@+id/t1" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="14sp"
+                              android:textStyle="bold" android:textColor="#FFFFFFFF" />
+                      </LinearLayout>
+
+                      <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                          android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                          <TextView android:id="@+id/n2" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="9sp"
+                              android:maxLines="1" android:textColor="#B3FFFFFF" />
+                          <TextView android:id="@+id/t2" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="14sp"
+                              android:textStyle="bold" android:textColor="#FFFFFFFF" />
+                      </LinearLayout>
+
+                      <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                          android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                          <TextView android:id="@+id/n3" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="9sp"
+                              android:maxLines="1" android:textColor="#B3FFFFFF" />
+                          <TextView android:id="@+id/t3" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="14sp"
+                              android:textStyle="bold" android:textColor="#FFFFFFFF" />
+                      </LinearLayout>
+
+                      <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                          android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                          <TextView android:id="@+id/n4" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="9sp"
+                              android:maxLines="1" android:textColor="#B3FFFFFF" />
+                          <TextView android:id="@+id/t4" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="14sp"
+                              android:textStyle="bold" android:textColor="#FFFFFFFF" />
+                      </LinearLayout>
+
+                      <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                          android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                          <TextView android:id="@+id/n5" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="9sp"
+                              android:maxLines="1" android:textColor="#B3FFFFFF" />
+                          <TextView android:id="@+id/t5" android:layout_width="wrap_content"
+                              android:layout_height="wrap_content" android:textSize="14sp"
+                              android:textStyle="bold" android:textColor="#FFFFFFFF" />
+                      </LinearLayout>
+                  </LinearLayout>
+              </LinearLayout>
+          </FrameLayout>
+          XML
+
+          cat > "$RES/layout/widget_qibla.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/qibla_root"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+              <ImageView
+                  android:id="@+id/qibla_bg"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:scaleType="fitXY"
+                  android:src="@drawable/widget_bg"
+                  android:contentDescription="@null" />
+
+              <ImageView
+                  android:id="@+id/qibla_image"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:layout_margin="6dp"
+                  android:scaleType="fitCenter"
+                  android:contentDescription="@null" />
+          </FrameLayout>
+          XML
+
+          cat > "$RES/xml/widget_times_info.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+              android:minWidth="250dp"
+              android:minHeight="40dp"
+              android:targetCellWidth="5"
+              android:targetCellHeight="1"
+              android:minResizeWidth="180dp"
+              android:minResizeHeight="40dp"
+              android:updatePeriodMillis="1800000"
+              android:resizeMode="horizontal|vertical"
+              android:widgetCategory="home_screen"
+              android:previewImage="@mipmap/ic_launcher"
+              android:initialLayout="@layout/widget_times" />
+          XML
+
+          cat > "$RES/xml/widget_qibla_info.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+              android:minWidth="110dp"
+              android:minHeight="110dp"
+              android:targetCellWidth="2"
+              android:targetCellHeight="2"
+              android:minResizeWidth="40dp"
+              android:minResizeHeight="40dp"
+              android:updatePeriodMillis="1800000"
+              android:resizeMode="horizontal|vertical"
+              android:widgetCategory="home_screen"
+              android:previewImage="@mipmap/ic_launcher"
+              android:initialLayout="@layout/widget_qibla" />
+          XML
+          echo "Layouts geschrieben."
+
+          cat > "$PKG/NurWidgets.kt" <<'KT'
+          package com.nurislam.nur_islam
+
+          import android.app.PendingIntent
+          import android.appwidget.AppWidgetManager
+          import android.appwidget.AppWidgetProvider
+          import android.content.Context
+          import android.content.Intent
+          import android.graphics.Bitmap
+          import android.graphics.Canvas
+          import android.graphics.Color
+          import android.graphics.Paint
+          import android.graphics.Path
+          import android.widget.RemoteViews
+          import org.json.JSONArray
+          import org.json.JSONObject
+
+          object WidgetData {
+              fun prefs(context: Context) =
+                  context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+
+              fun alpha(context: Context): Int =
+                  prefs(context).getLong("flutter.widget_alpha", 170L).toInt().coerceIn(0, 255)
+
+              fun colour(context: Context, key: String, fallback: Int): Int {
+                  val v = prefs(context).getLong(key, -1L)
+                  return if (v < 0) fallback else (0xFF000000.toInt() or v.toInt())
+              }
+
+              fun openApp(context: Context): PendingIntent {
+                  val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                  return PendingIntent.getActivity(
+                      context, 0, intent,
+                      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                  )
+              }
+          }
+
+          /** Breites Feld mit den fuenf Gebetszeiten. */
+          class PrayerWidgetProvider : AppWidgetProvider() {
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+                  for (id in ids) render(context, manager, id)
+              }
+
+              private fun render(context: Context, manager: AppWidgetManager, id: Int) {
+                  val views = RemoteViews(context.packageName, R.layout.widget_times)
+                  val gold = WidgetData.colour(context, "flutter.widget_gold", Color.parseColor("#D8B45A"))
+                  val bg = WidgetData.colour(context, "flutter.widget_bg", Color.parseColor("#080F1F"))
+
+                  views.setInt(R.id.times_bg, "setColorFilter", bg)
+                  views.setInt(R.id.times_bg, "setImageAlpha", WidgetData.alpha(context))
+
+                  val nameIds = intArrayOf(R.id.n1, R.id.n2, R.id.n3, R.id.n4, R.id.n5)
+                  val timeIds = intArrayOf(R.id.t1, R.id.t2, R.id.t3, R.id.t4, R.id.t5)
+
+                  val raw = WidgetData.prefs(context).getString("flutter.widget_times", null)
+                  if (raw == null) {
+                      views.setTextViewText(R.id.times_header, "Nur Islam")
+                      for (i in 0..4) {
+                          views.setTextViewText(nameIds[i], "")
+                          views.setTextViewText(timeIds[i], "--:--")
+                      }
+                  } else {
+                      try {
+                          val json = JSONObject(raw)
+                          val header = json.optString("date", "") + "  ·  " + json.optString("label", "")
+                          views.setTextViewText(R.id.times_header, header)
+                          val next = json.optString("next", "")
+                          val times: JSONArray = json.optJSONArray("times") ?: JSONArray()
+                          for (i in 0..4) {
+                              if (i < times.length()) {
+                                  val row = times.getJSONArray(i)
+                                  val name = row.optString(0, "")
+                                  views.setTextViewText(nameIds[i], name)
+                                  views.setTextViewText(timeIds[i], row.optString(1, "--:--"))
+                                  val isNext = name == next
+                                  views.setTextColor(timeIds[i], if (isNext) gold else Color.WHITE)
+                                  views.setTextColor(nameIds[i], if (isNext) gold else Color.parseColor("#B3FFFFFF"))
+                              } else {
+                                  views.setTextViewText(nameIds[i], "")
+                                  views.setTextViewText(timeIds[i], "")
+                              }
+                          }
+                      } catch (e: Exception) {
+                          views.setTextViewText(R.id.times_header, "Nur Islam")
+                      }
+                  }
+
+                  views.setOnClickPendingIntent(R.id.times_root, WidgetData.openApp(context))
+                  manager.updateAppWidget(id, views)
+              }
+          }
+
+          /** Kompass mit fester Richtung zur Kaaba. */
+          class QiblaWidgetProvider : AppWidgetProvider() {
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+                  for (id in ids) render(context, manager, id)
+              }
+
+              private fun render(context: Context, manager: AppWidgetManager, id: Int) {
+                  val views = RemoteViews(context.packageName, R.layout.widget_qibla)
+                  val gold = WidgetData.colour(context, "flutter.widget_gold", Color.parseColor("#D8B45A"))
+                  val bg = WidgetData.colour(context, "flutter.widget_bg", Color.parseColor("#080F1F"))
+
+                  views.setInt(R.id.qibla_bg, "setColorFilter", bg)
+                  views.setInt(R.id.qibla_bg, "setImageAlpha", WidgetData.alpha(context))
+
+                  val bearing = WidgetData.prefs(context)
+                      .getString("flutter.widget_qibla", null)?.toFloatOrNull() ?: 0f
+
+                  views.setImageViewBitmap(R.id.qibla_image, compass(bearing, gold))
+                  views.setOnClickPendingIntent(R.id.qibla_root, WidgetData.openApp(context))
+                  manager.updateAppWidget(id, views)
+              }
+
+              private fun compass(bearing: Float, gold: Int): Bitmap {
+                  val size = 320
+                  val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+                  val c = Canvas(bmp)
+                  val cx = size / 2f
+                  val r = size / 2f - 14f
+
+                  val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                      style = Paint.Style.STROKE
+                      strokeWidth = 4f
+                      color = gold
+                      alpha = 150
+                  }
+                  c.drawCircle(cx, cx, r, ring)
+
+                  val ticks = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                      strokeWidth = 3f
+                      color = Color.WHITE
+                      alpha = 110
+                  }
+                  for (deg in 0 until 360 step 30) {
+                      val rad = Math.toRadians((deg - 90).toDouble())
+                      val x1 = cx + Math.cos(rad).toFloat() * (r - 4)
+                      val y1 = cx + Math.sin(rad).toFloat() * (r - 4)
+                      val x2 = cx + Math.cos(rad).toFloat() * (r - 16)
+                      val y2 = cx + Math.sin(rad).toFloat() * (r - 16)
+                      c.drawLine(x1, y1, x2, y2, ticks)
+                  }
+
+                  val label = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                      color = Color.parseColor("#E06050")
+                      textSize = 30f
+                      textAlign = Paint.Align.CENTER
+                      isFakeBoldText = true
+                  }
+                  c.drawText("N", cx, 34f, label)
+
+                  // Nadel zur Kaaba
+                  c.save()
+                  c.rotate(bearing, cx, cx)
+                  val needle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gold }
+                  val p = Path()
+                  p.moveTo(cx, cx - r + 26)
+                  p.lineTo(cx - 20, cx + 26)
+                  p.lineTo(cx, cx + 12)
+                  p.lineTo(cx + 20, cx + 26)
+                  p.close()
+                  c.drawPath(p, needle)
+                  c.restore()
+
+                  val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+                  c.drawCircle(cx, cx, 7f, dot)
+
+                  val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                      color = Color.WHITE
+                      textSize = 34f
+                      textAlign = Paint.Align.CENTER
+                      isFakeBoldText = true
+                  }
+                  c.drawText("${Math.round(bearing)}°", cx, size - 16f, text)
+                  return bmp
+              }
+          }
+          KT
+          echo "Kotlin geschrieben."
+
+          python3 - <<'PYEOF'
+          path = "android/app/src/main/AndroidManifest.xml"
+          text = open(path, encoding="utf-8").read()
+          if "PrayerWidgetProvider" not in text:
+              block = """
+              <receiver
+                  android:name=".PrayerWidgetProvider"
+                  android:exported="false">
+                  <intent-filter>
+                      <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                  </intent-filter>
+                  <meta-data
+                      android:name="android.appwidget.provider"
+                      android:resource="@xml/widget_times_info" />
+              </receiver>
+
+              <receiver
+                  android:name=".QiblaWidgetProvider"
+                  android:exported="false">
+                  <intent-filter>
+                      <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                  </intent-filter>
+                  <meta-data
+                      android:name="android.appwidget.provider"
+                      android:resource="@xml/widget_qibla_info" />
+              </receiver>
+          """
+              text = text.replace("</application>", block + "    </application>", 1)
+              open(path, "w", encoding="utf-8").write(text)
+              print("Manifest ergaenzt.")
+          else:
+              print("Manifest war schon ergaenzt.")
+          PYEOF
+          grep -c "receiver" android/app/src/main/AndroidManifest.xml
+
+
       - name: Abhaengigkeiten laden
         run: flutter pub get
 
@@ -139,7 +524,29 @@ jobs:
         run: flutter analyze || true
 
       - name: Release-APK bauen
-        run: flutter build apk --release
+        run: |
+          if flutter build apk --release; then
+            echo "Build erfolgreich."
+          else
+            echo "::warning::Build fehlgeschlagen - Widgets werden entfernt und erneut versucht."
+            rm -f android/app/src/main/kotlin/com/nurislam/nur_islam/NurWidgets.kt
+            rm -f android/app/src/main/res/layout/widget_times.xml
+            rm -f android/app/src/main/res/layout/widget_qibla.xml
+            rm -f android/app/src/main/res/xml/widget_times_info.xml
+            rm -f android/app/src/main/res/xml/widget_qibla_info.xml
+            python3 - <<'PYEOF'
+          import re
+          path = "android/app/src/main/AndroidManifest.xml"
+          text = open(path, encoding="utf-8").read()
+          text = re.sub(r"\s*<receiver[^>]*?(PrayerWidgetProvider|QiblaWidgetProvider).*?</receiver>",
+                        "", text, flags=re.S)
+          open(path, "w", encoding="utf-8").write(text)
+          print("Widget-Eintraege aus dem Manifest entfernt.")
+          PYEOF
+            flutter clean
+            flutter pub get
+            flutter build apk --release
+          fi
 
       - name: APK hochladen
         uses: actions/upload-artifact@v4
