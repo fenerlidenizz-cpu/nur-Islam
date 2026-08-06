@@ -254,12 +254,16 @@ const Map<String, List<String>> _strings = {
   // Feineinstellung der Winkel
   'angles': ['Dämmerungswinkel', 'Şafak açıları', 'Twilight angles'],
   'angles_hint': [
-    'Diyanet rechnet İmsak mit 18° und Yatsı mit 17°. Manche Kalender verwenden für Mitteleuropa '
-        'kleinere Werte. Wenn deine Referenz abweicht, kalibriere unten.',
-    'Diyanet İmsak için 18°, Yatsı için 17° kullanır. Bazı takvimler Orta Avrupa için daha küçük '
-        'değerler alır. Referansın farklıysa aşağıdan kalibre et.',
-    'Diyanet uses 18° for Fajr and 17° for Isha. Some calendars use smaller values for central '
-        'Europe. If your reference differs, calibrate below.',
+    'Die Diyanet-Einstellung nutzt 14,9° und 13,9° — das entspricht den veröffentlichten '
+        'Zeiten für Mitteleuropa. Die klassischen 18°/17° ergeben in nördlichen Breiten '
+        'deutlich frühere İmsak- und spätere Yatsı-Zeiten. Weicht deine Moschee ab, '
+        'kalibriere unten.',
+    'Diyanet ayarı 14,9° ve 13,9° kullanır — Orta Avrupa için yayımlanan vakitlere uyar. '
+        'Klasik 18°/17° kuzey enlemlerde çok daha erken İmsak ve geç Yatsı verir. '
+        'Camin farklıysa aşağıdan kalibre et.',
+    'The Diyanet setting uses 14.9° and 13.9°, matching the published times for central '
+        'Europe. The classic 18°/17° gives much earlier Fajr and later Isha at northern '
+        'latitudes. If your mosque differs, calibrate below.',
   ],
   'fajr_angle': ['İmsak-Winkel', 'İmsak açısı', 'Fajr angle'],
   'isha_angle': ['Yatsı-Winkel', 'Yatsı açısı', 'Isha angle'],
@@ -274,9 +278,12 @@ const Map<String, List<String>> _strings = {
   'calibrate_failed': ['Zeit passt nicht zu diesem Standort.', 'Bu konuma uymuyor.', 'That time does not fit this location.'],
   'temkin': ['Temkin nach Diyanet', 'Diyanet temkini', 'Diyanet temkin'],
   'temkin_hint': [
-    'Öğle +5, İkindi +4, Sonnenaufgang −5, Akşam +7 Minuten.',
-    'Öğle +5, İkindi +4, Güneş −5, Akşam +7 dakika.',
-    'Dhuhr +5, Asr +4, sunrise −5, Maghrib +7 minutes.',
+    'Öğle +5, İkindi +4, Sonnenaufgang −5, Akşam +7 Minuten. Die Diyanet-Methode ergänzt '
+        'Sonnenaufgang −1 und Akşam +1 über die Feinjustierung.',
+    'Öğle +5, İkindi +4, Güneş −5, Akşam +7 dakika. Diyanet yöntemi ince ayarda ayrıca '
+        'Güneş −1 ve Akşam +1 ekler.',
+    'Dhuhr +5, Asr +4, sunrise −5, Maghrib +7 minutes. The Diyanet method adds sunrise −1 '
+        'and Maghrib +1 through the fine tuning.',
   ],
   'asr_method': ['İkindi-Methode', 'İkindi yöntemi', 'Asr method'],
   'asr_first': ['Einfaches Schattenmaß (Diyanet)', 'Asr-ı evvel (Diyanet)', 'Single shadow (Diyanet)'],
@@ -664,12 +671,19 @@ class CalcMethod {
   final int ishaInterval; // Minuten nach Akşam; 0 = Winkel verwenden
   final int asr;
   final bool temkin;
+  final int offsetSunrise, offsetMaghrib;
   const CalcMethod(this.id, this.name, this.fajr, this.isha,
-      {this.ishaInterval = 0, this.asr = 1, this.temkin = false});
+      {this.ishaInterval = 0,
+      this.asr = 1,
+      this.temkin = false,
+      this.offsetSunrise = 0,
+      this.offsetMaghrib = 0});
 }
 
 const List<CalcMethod> kMethods = [
-  CalcMethod('diyanet', 'Diyanet İşleri Başkanlığı', 18, 17, asr: 1, temkin: true),
+  // Auf die veroeffentlichten Diyanet-Zeiten fuer Mitteleuropa abgeglichen.
+  CalcMethod('diyanet', 'Diyanet İşleri Başkanlığı', 14.9, 13.9,
+      asr: 1, temkin: true, offsetSunrise: -1, offsetMaghrib: 1),
   CalcMethod('mwl', 'Muslim World League', 18, 17),
   CalcMethod('isna', 'ISNA (Nordamerika)', 15, 15),
   CalcMethod('egypt', 'Ägyptische Vermessungsbehörde', 19.5, 17.5),
@@ -999,8 +1013,8 @@ class AppState extends ChangeNotifier {
   String methodId = 'diyanet';
   int ishaIntervalMin = 0;
   int asrShadowFactor = 1; // Diyanet: einfaches Schattenmaß
-  double fajrAngle = 18.0;
-  double ishaAngle = 17.0;
+  double fajrAngle = 14.9;
+  double ishaAngle = 13.9;
   bool useTemkin = true;
 
   double? lat, lng;
@@ -1058,8 +1072,8 @@ class AppState extends ChangeNotifier {
     methodId = _p.getString('methodId') ?? 'diyanet';
     ishaIntervalMin = _p.getInt('ishaInterval') ?? 0;
     asrShadowFactor = _p.getInt('asrFactor') ?? 1;
-    fajrAngle = _p.getDouble('fajrAngle') ?? 18.0;
-    ishaAngle = _p.getDouble('ishaAngle') ?? 17.0;
+    fajrAngle = _p.getDouble('fajrAngle') ?? 14.9;
+    ishaAngle = _p.getDouble('ishaAngle') ?? 13.9;
     useTemkin = _p.getBool('useTemkin') ?? true;
     lat = _p.getDouble('lat');
     lng = _p.getDouble('lng');
@@ -1147,6 +1161,9 @@ class AppState extends ChangeNotifier {
     ishaIntervalMin = m.ishaInterval;
     asrShadowFactor = m.asr;
     useTemkin = m.temkin;
+    offsets[P.sunrise] = m.offsetSunrise;
+    offsets[P.maghrib] = m.offsetMaghrib;
+    _p.setString('offsets', jsonEncode({for (final e in offsets.entries) e.key.name: e.value}));
     _p.setString('methodId', m.id);
     _p.setDouble('fajrAngle', fajrAngle);
     _p.setDouble('ishaAngle', ishaAngle);
@@ -3821,7 +3838,8 @@ class _SettingsPageState extends State<SettingsPage> {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: ExpansionTile(
         key: PageStorageKey(id),
-        initiallyExpanded: _openSettingsSection == id,
+        initiallyExpanded: _openSettingsSection == id ||
+            (_openSettingsSection == null && id == 'appearance'),
         onExpansionChanged: (open) => _openSettingsSection = open ? id : null,
         leading: Icon(icon, color: pal.gold),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -3932,18 +3950,29 @@ class _SettingsPageState extends State<SettingsPage> {
                     onSelectionChanged: (s) => appState.setTheme(s.first),
                   ),
                 ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(tr('settings_palette'),
+                        style: theme.textTheme.labelLarge
+                            ?.copyWith(fontWeight: FontWeight.w600)),
+                  ),
+                ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  height: 92,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
                     children: [
                       for (final entry in palettes.entries)
                         _PaletteChip(value: entry.key, data: entry.value),
                     ],
                   ),
                 ),
+                const SizedBox(height: 10),
                 SwitchListTile(
                   value: appState.use24h,
                   onChanged: appState.setUse24h,
@@ -4192,12 +4221,10 @@ class _PaletteChip extends StatelessWidget {
       AppLang.tr => data.nameTr,
       AppLang.en => data.nameEn,
     };
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => appState.setPalette(value),
-        child: Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => appState.setPalette(value),
+      child: Container(
           width: 108,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -4220,7 +4247,6 @@ class _PaletteChip extends StatelessWidget {
             const SizedBox(height: 8),
             Text(name, style: const TextStyle(fontSize: 11), maxLines: 2),
           ]),
-        ),
       ),
     );
   }
@@ -4282,10 +4308,21 @@ class _AnglesPageState extends State<AnglesPage> {
               onChanged: (v) => appState.setAngles(isha: v),
             ),
             const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => appState.setAngles(fajr: 18, isha: 17),
-              child: const Text('Diyanet: 18° / 17°'),
-            ),
+            Row(children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => appState.applyMethod('diyanet'),
+                  child: const Text('Diyanet: 14,9° / 13,9°'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => appState.setAngles(fajr: 18, isha: 17),
+                  child: const Text('Klassisch: 18° / 17°'),
+                ),
+              ),
+            ]),
             const SizedBox(height: 26),
             Text(tr('calibrate'), style: theme.textTheme.titleSmall),
             const SizedBox(height: 6),
