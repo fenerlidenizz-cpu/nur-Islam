@@ -525,7 +525,9 @@ jobs:
 
       - name: Release-APK bauen
         run: |
-          if flutter build apk --release; then
+          BUILD_NR=$(( 100 + ${{ github.run_number }} ))
+          echo "Interne Versionsnummer: $BUILD_NR"
+          if flutter build apk --release --build-number=$BUILD_NR; then
             echo "Build erfolgreich."
           else
             echo "::warning::Build fehlgeschlagen - Widgets werden entfernt und erneut versucht."
@@ -545,8 +547,42 @@ jobs:
           PYEOF
             flutter clean
             flutter pub get
-            flutter build apk --release
+            flutter build apk --release --build-number=$BUILD_NR
           fi
+
+      # Feste Signatur: nur so lassen sich Updates ueber die alte Version
+      # installieren, ohne dass Nutzer deinstallieren muessen.
+      - name: APK mit festem Schluessel signieren
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::Kein Signaturschluessel hinterlegt. Die APK ist mit einem"
+            echo "::warning::Wegwerf-Schluessel signiert - Updates lassen sich damit nicht"
+            echo "::warning::ueber eine bestehende Installation legen."
+            exit 0
+          fi
+
+          set -e
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          BT=$(ls -d "$SDK"/build-tools/* | sort -V | tail -1)
+          echo "Build-Tools: $BT"
+
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > /tmp/nur-islam.jks
+
+          "$BT/zipalign" -f -p 4 "$APK" /tmp/aligned.apk
+          "$BT/apksigner" sign \
+            --ks /tmp/nur-islam.jks \
+            --ks-pass "pass:$KEYSTORE_PASSWORD" \
+            --ks-key-alias nurislam \
+            --key-pass "pass:$KEYSTORE_PASSWORD" \
+            --out "$APK" /tmp/aligned.apk
+
+          "$BT/apksigner" verify --print-certs "$APK" | head -4
+          rm -f /tmp/nur-islam.jks /tmp/aligned.apk
+          echo "Mit festem Schluessel signiert."
 
       - name: APK hochladen
         uses: actions/upload-artifact@v4
