@@ -510,6 +510,50 @@ const Map<String, List<String>> _strings = {
     'Namaz vakti hatırlatmaları bir sonraki güncellemede geliyor.',
     'Prayer time reminders are coming in the next update.',
   ],
+  'widgets': ['Startbildschirm-Widgets', 'Ana ekran widget\'ları', 'Home screen widgets'],
+  'widget_alpha': ['Transparenz', 'Şeffaflık', 'Transparency'],
+  'widget_hint': [
+    'Lege ein Widget an, indem du lange auf eine freie Stelle deines Startbildschirms '
+        'tippst und unter „Widgets" nach Nur Islam suchst. Es gibt ein breites Feld mit '
+        'den Tageszeiten und einen Qibla-Kompass.',
+    'Ana ekranda boş bir yere uzun basıp „Widget\'lar" altında Nur Islam\'ı ara. Günün '
+        'vakitlerini gösteren geniş bir alan ve bir kıble pusulası var.',
+    'Add a widget by long-pressing an empty spot on your home screen and looking for Nur '
+        'Islam under „Widgets". There is a wide field with the day\'s times and a qibla compass.',
+  ],
+  'widget_refresh_note': [
+    'Android erneuert Widgets höchstens alle 30 Minuten. Der Qibla-Kompass zeigt deshalb '
+        'die feste Richtung zur Kaaba und dreht sich nicht mit dem Gerät — dafür öffne die App.',
+    'Android widget\'ları en fazla 30 dakikada bir yeniler. Bu yüzden kıble pusulası sabit '
+        'yönü gösterir, cihazla dönmez — bunun için uygulamayı aç.',
+    'Android refreshes widgets at most every 30 minutes. The qibla compass therefore shows '
+        'the fixed direction to the Kaaba and does not turn with the device — open the app for that.',
+  ],
+  'unlimited': ['Unbegrenzt', 'Sınırsız', 'Unlimited'],
+  'method': ['Berechnungsmethode', 'Hesaplama yöntemi', 'Calculation method'],
+  'method_custom': ['Eigene Einstellung', 'Kendi ayarım', 'Custom'],
+  'method_hint': [
+    'Die Methode legt die Winkel für İmsak und Yatsı fest sowie die Art der '
+        'İkindi-Berechnung. Diyanet ist die Voreinstellung.',
+    'Yöntem, İmsak ve Yatsı açılarını ve İkindi hesabını belirler. Varsayılan Diyanet\'tir.',
+    'The method sets the twilight angles for Fajr and Isha and how Asr is calculated. '
+        'Diyanet is the default.',
+  ],
+  'isha_interval': ['Yatsı als fester Abstand', 'Yatsı sabit aralık', 'Isha as fixed interval'],
+  'after_maghrib': ['nach Akşam', 'akşamdan sonra', 'after Maghrib'],
+  'code_length_note': [
+    'Der Code enthält deinen Namen und die Zahlen der letzten 30 Tage. Kürzer als etwa '
+        '20 Zeichen geht es nicht, solange es keinen Server gibt, auf dem die Daten liegen.',
+    'Kod, adını ve son 30 günün sayılarını içerir. Verilerin durduğu bir sunucu olmadan '
+        '20 karakterin altına inmek mümkün değil.',
+    'The code carries your name and the counts of the last 30 days. It cannot get much '
+        'below 20 characters as long as there is no server holding the data.',
+  ],
+  'name_needed': [
+    'Trag zuerst deinen Namen ein — er wird bei deinen Freunden angezeigt.',
+    'Önce adını gir — arkadaşlarında bu görünecek.',
+    'Enter your name first — it is what your friends will see.',
+  ],
   'tap_anywhere': [
     'Tippe auf die Perlen oder in das untere Drittel des Bildschirms',
     'Boncuklara veya ekranın alt üçte birine dokun',
@@ -612,6 +656,30 @@ extension PLabel on P {
 const List<P> kPrayers = [P.fajr, P.dhuhr, P.asr, P.maghrib, P.isha];
 
 enum TimeSource { calculated, online, custom }
+
+/// Bekannte Berechnungsverfahren. asr 1 = einfaches Schattenmaß, 2 = doppeltes.
+class CalcMethod {
+  final String id, name;
+  final double fajr, isha;
+  final int ishaInterval; // Minuten nach Akşam; 0 = Winkel verwenden
+  final int asr;
+  final bool temkin;
+  const CalcMethod(this.id, this.name, this.fajr, this.isha,
+      {this.ishaInterval = 0, this.asr = 1, this.temkin = false});
+}
+
+const List<CalcMethod> kMethods = [
+  CalcMethod('diyanet', 'Diyanet İşleri Başkanlığı', 18, 17, asr: 1, temkin: true),
+  CalcMethod('mwl', 'Muslim World League', 18, 17),
+  CalcMethod('isna', 'ISNA (Nordamerika)', 15, 15),
+  CalcMethod('egypt', 'Ägyptische Vermessungsbehörde', 19.5, 17.5),
+  CalcMethod('karachi', 'Karachi (Univ. of Islamic Sciences)', 18, 18),
+  CalcMethod('ummalqura', 'Umm al-Qura (Mekka)', 18.5, 0, ishaInterval: 90),
+  CalcMethod('dubai', 'Dubai', 18.2, 18.2),
+  CalcMethod('tehran', 'Teheran', 17.7, 14),
+  CalcMethod('france', 'UOIF Frankreich', 12, 12),
+  CalcMethod('hanafi_mwl', 'Muslim World League (hanefitisch)', 18, 17, asr: 2),
+];
 
 enum LocState { unknown, loading, ready, serviceOff, denied, deniedForever, error }
 
@@ -792,6 +860,7 @@ class PrayerCalculator {
     required double fajrAngle,
     required double ishaAngle,
     required bool useTemkin,
+    int ishaIntervalMin = 0,
     Map<P, int> offsets = const {},
   }) {
     final day = DateTime(date.year, date.month, date.day);
@@ -831,7 +900,12 @@ class PrayerCalculator {
     put(P.dhuhr, toLocal(tDhuhr, P.dhuhr, temkinDhuhr));
     put(P.asr, toLocal(tAsr, P.asr, temkinAsr));
     put(P.maghrib, toLocal(tMaghrib, P.maghrib, temkinMaghrib));
-    put(P.isha, toLocal(tIsha, P.isha, 0));
+    if (ishaIntervalMin > 0 && map[P.maghrib] != null) {
+      map[P.isha] = map[P.maghrib]!
+          .add(Duration(minutes: ishaIntervalMin + (offsets[P.isha] ?? 0)));
+    } else {
+      put(P.isha, toLocal(tIsha, P.isha, 0));
+    }
 
     return DayTimes(date: day, times: map, source: TimeSource.calculated);
   }
@@ -922,6 +996,8 @@ class AppState extends ChangeNotifier {
   TimeSource timeSource = TimeSource.calculated;
 
   // Berechnung
+  String methodId = 'diyanet';
+  int ishaIntervalMin = 0;
   int asrShadowFactor = 1; // Diyanet: einfaches Schattenmaß
   double fajrAngle = 18.0;
   double ishaAngle = 17.0;
@@ -955,6 +1031,7 @@ class AppState extends ChangeNotifier {
 
   // Kerahat
   bool tutorialDone = false;
+  int widgetAlpha = 170; // 0 = unsichtbar, 255 = deckend
   bool showKerahat = false;
   int kerahatSunriseMin = 45;
   int kerahatIstivaMin = 15;
@@ -978,6 +1055,8 @@ class AppState extends ChangeNotifier {
     palette = AppPalette.values[_p.getInt('palette') ?? 0];
     use24h = _p.getBool('use24h') ?? true;
     timeSource = TimeSource.values[_p.getInt('timeSource') ?? 0];
+    methodId = _p.getString('methodId') ?? 'diyanet';
+    ishaIntervalMin = _p.getInt('ishaInterval') ?? 0;
     asrShadowFactor = _p.getInt('asrFactor') ?? 1;
     fajrAngle = _p.getDouble('fajrAngle') ?? 18.0;
     ishaAngle = _p.getDouble('ishaAngle') ?? 17.0;
@@ -1003,6 +1082,7 @@ class AppState extends ChangeNotifier {
     }
     userName = _p.getString('userName') ?? '';
     tutorialDone = _p.getBool('tutorialDone') ?? false;
+    widgetAlpha = _p.getInt('widget_alpha') ?? 170;
     showKerahat = _p.getBool('showKerahat') ?? false;
     kerahatSunriseMin = _p.getInt('kSunrise') ?? 45;
     kerahatIstivaMin = _p.getInt('kIstiva') ?? 15;
@@ -1051,9 +1131,42 @@ class AppState extends ChangeNotifier {
   void setTheme(ThemeMode v) => _setInt('theme', v.index, () => themeMode = v);
   void setPalette(AppPalette v) => _setInt('palette', v.index, () => palette = v);
   void setTimeSource(TimeSource v) => _setInt('timeSource', v.index, () => timeSource = v);
-  void setAsrFactor(int v) => _setInt('asrFactor', v, () => asrShadowFactor = v);
+  void setAsrFactor(int v) {
+    _markCustom();
+    _setInt('asrFactor', v, () => asrShadowFactor = v);
+  }
+
+  CalcMethod get method =>
+      kMethods.firstWhere((m) => m.id == methodId, orElse: () => kMethods.first);
+
+  void applyMethod(String id) {
+    final m = kMethods.firstWhere((e) => e.id == id, orElse: () => kMethods.first);
+    methodId = m.id;
+    fajrAngle = m.fajr;
+    ishaAngle = m.isha;
+    ishaIntervalMin = m.ishaInterval;
+    asrShadowFactor = m.asr;
+    useTemkin = m.temkin;
+    _p.setString('methodId', m.id);
+    _p.setDouble('fajrAngle', fajrAngle);
+    _p.setDouble('ishaAngle', ishaAngle);
+    _p.setInt('ishaInterval', ishaIntervalMin);
+    _p.setInt('asrFactor', asrShadowFactor);
+    _p.setBool('useTemkin', useTemkin);
+    notifyListeners();
+    if (timeSource == TimeSource.online) unawaited(syncOnline());
+  }
+
+  /// Wird gesetzt, sobald von Hand an den Werten gedreht wird.
+  void _markCustom() {
+    if (methodId != 'custom') {
+      methodId = 'custom';
+      _p.setString('methodId', 'custom');
+    }
+  }
 
   void setAngles({double? fajr, double? isha}) {
+    _markCustom();
     if (fajr != null) {
       fajrAngle = fajr.clamp(8.0, 22.0);
       _p.setDouble('fajrAngle', fajrAngle);
@@ -1066,6 +1179,7 @@ class AppState extends ChangeNotifier {
   }
 
   void setUseTemkin(bool v) {
+    _markCustom();
     useTemkin = v;
     _p.setBool('useTemkin', v);
     notifyListeners();
@@ -1081,6 +1195,55 @@ class AppState extends ChangeNotifier {
     offsets[p] = minutes.clamp(-30, 30);
     _p.setString('offsets', jsonEncode({for (final e in offsets.entries) e.key.name: e.value}));
     notifyListeners();
+  }
+
+  void setWidgetAlpha(int v) {
+    widgetAlpha = v.clamp(40, 255);
+    _p.setInt('widget_alpha', widgetAlpha);
+    notifyListeners();
+  }
+
+  DateTime _lastWidgetWrite = DateTime(2000);
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    // Die Startbildschirm-Widgets lesen diese Werte direkt aus dem Speicher.
+    if (DateTime.now().difference(_lastWidgetWrite).inSeconds > 2) {
+      _lastWidgetWrite = DateTime.now();
+      unawaited(writeWidgetData());
+    }
+  }
+
+  Future<void> writeWidgetData() async {
+    try {
+      final now = DateTime.now();
+      final day = timesFor(now);
+      final next = nextPrayer(now);
+      final entries = <List<String>>[];
+      if (day != null) {
+        for (final p in kPrayers) {
+          entries.add([p.label, fmtTime(day[p])]);
+        }
+      }
+      final payload = {
+        'date': longDate(now),
+        'label': refMosque?.name ?? locationLabel,
+        'next': next?.key.label ?? '',
+        'times': entries,
+      };
+      await _p.setString('widget_times', jsonEncode(payload));
+      await _p.setInt('widget_alpha', widgetAlpha);
+      int rgb(Color c) =>
+          ((c.r * 255).round() << 16) | ((c.g * 255).round() << 8) | (c.b * 255).round();
+      await _p.setInt('widget_bg', rgb(pal.deep));
+      await _p.setInt('widget_gold', rgb(pal.gold));
+      if (lat != null && lng != null) {
+        await _p.setString('widget_qibla', Qibla.bearing(lat!, lng!).toStringAsFixed(1));
+      }
+    } catch (_) {
+      // Widgets sind Beiwerk — ein Fehler hier darf die App nicht stören.
+    }
   }
 
   void finishTutorial() {
@@ -1152,6 +1315,7 @@ class AppState extends ChangeNotifier {
   }
 
   // --- Tesbih ---
+  /// Ziel 0 bedeutet: ohne Begrenzung weiterzählen.
   bool get tasbihAtTarget => tasbihTarget > 0 && tasbihCount >= tasbihTarget;
 
   /// Zählt hoch und bleibt beim eingestellten Ziel stehen — Zurücksetzen von Hand.
@@ -1179,7 +1343,7 @@ class AppState extends ChangeNotifier {
   void setTasbihTarget(int v) {
     tasbihTarget = v;
     _p.setInt('tasbihTarget', v);
-    if (tasbihCount > v) {
+    if (v > 0 && tasbihCount > v) {
       tasbihCount = v;
       _p.setInt('tasbihCount', v);
     }
@@ -1245,31 +1409,71 @@ class AppState extends ChangeNotifier {
   double get weekAverage => weekTotal / 7;
   double get monthAverage => monthTotal / 30;
 
-  /// Kompakter Code zum Teilen — enthält nur Name und Tageszahlen.
+  static const String _alphabet =
+      '0123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+  /// 30 Tageswerte (je 0–5) werden zu einer Zahl gepackt und kurz kodiert.
+  /// Ergebnis: rund 15 Zeichen plus Name statt mehrerer hundert.
   String buildShareCode() {
     final today = DateTime.now();
-    final days = <String, int>{};
+    var value = BigInt.zero;
+    final six = BigInt.from(6);
     for (var i = 0; i < 30; i++) {
       final d = today.subtract(Duration(days: 29 - i));
-      final c = prayedCount(d);
-      if (c > 0) days[dayKey(d)] = c;
+      value = value * six + BigInt.from(prayedCount(d).clamp(0, 5));
     }
-    final payload = jsonEncode({
-      'v': 1,
-      'n': userName.isEmpty ? 'Freund' : userName,
-      'd': days,
-    });
-    return 'NI1:${base64Url.encode(utf8.encode(payload))}';
+    final base = BigInt.from(_alphabet.length);
+    final buffer = StringBuffer();
+    var v = value;
+    if (v == BigInt.zero) buffer.write(_alphabet[0]);
+    while (v > BigInt.zero) {
+      buffer.write(_alphabet[(v % base).toInt()]);
+      v = v ~/ base;
+    }
+    // Anker ist der heutige Tag, damit der Empfänger die Werte zuordnen kann.
+    final anchor = today.difference(DateTime(2020)).inDays;
+    final name = userName.isEmpty ? 'Freund' : userName.replaceAll('~', '');
+    return 'NI~$anchor~${buffer.toString()}~$name';
   }
 
+  /// Liest einen Code ein. Der Name des Absenders wird übernommen.
   bool addFriendFromCode(String raw) {
     try {
-      final code = raw.trim().split(RegExp(r'\s+')).firstWhere((s) => s.startsWith('NI1:'));
-      final json = jsonDecode(utf8.decode(base64Url.decode(code.substring(4))))
-          as Map<String, dynamic>;
-      final name = (json['n'] as String?)?.trim();
-      final days = (json['d'] as Map).map((k, v) => MapEntry(k as String, (v as num).toInt()));
-      if (name == null || name.isEmpty) return false;
+      final token = raw
+          .trim()
+          .split(RegExp(r'\s+'))
+          .firstWhere((t) => t.startsWith('NI~'), orElse: () => '');
+      if (token.isEmpty) return false;
+      final parts = token.split('~');
+      if (parts.length < 4) return false;
+
+      final anchor = int.parse(parts[1]);
+      final encoded = parts[2];
+      final name = parts.sublist(3).join('~').trim();
+      if (name.isEmpty) return false;
+
+      final base = BigInt.from(_alphabet.length);
+      var value = BigInt.zero;
+      for (var i = encoded.length - 1; i >= 0; i--) {
+        final idx = _alphabet.indexOf(encoded[i]);
+        if (idx < 0) return false;
+        value = value * base + BigInt.from(idx);
+      }
+
+      final six = BigInt.from(6);
+      final counts = List<int>.filled(30, 0);
+      for (var i = 29; i >= 0; i--) {
+        counts[i] = (value % six).toInt();
+        value = value ~/ six;
+      }
+
+      final anchorDate = DateTime(2020).add(Duration(days: anchor));
+      final days = <String, int>{};
+      for (var i = 0; i < 30; i++) {
+        final d = anchorDate.subtract(Duration(days: 29 - i));
+        if (counts[i] > 0) days[dayKey(d)] = counts[i];
+      }
+
       friends.removeWhere((f) => f.name.toLowerCase() == name.toLowerCase());
       friends.add(Friend(name: name, days: days, updated: DateTime.now()));
       _saveFriends();
@@ -1672,6 +1876,7 @@ out center 100;
       fajrAngle: fajrAngle,
       ishaAngle: ishaAngle,
       useTemkin: useTemkin,
+      ishaIntervalMin: ishaIntervalMin,
       offsets: offsets,
     );
   }
@@ -3374,8 +3579,8 @@ class TasbihTab extends StatelessWidget {
     final target = appState.tasbihTarget;
     final count = appState.tasbihCount;
     // Am Ziel bleibt die volle Zahl stehen statt auf 0 zu springen.
-    final inRound = appState.tasbihAtTarget ? target : (target > 0 ? count % target : count);
-    final rounds = target > 0 ? count ~/ target : 0;
+    final inRound = appState.tasbihAtTarget ? target : (target > 0 ? count % target : count % 33);
+    final rounds = target > 0 ? count ~/ target : count ~/ 33;
 
 
     return Stack(children: [
@@ -3423,10 +3628,10 @@ class TasbihTab extends StatelessWidget {
                 CustomPaint(
                   size: const Size(300, 320),
                   painter: TasbihPainter(
-                    beadCount: target > 33 ? 33 : target,
+                    beadCount: (target > 33 || target == 0) ? 33 : target,
                     filled: appState.tasbihAtTarget
                         ? (target > 33 ? 33 : target)
-                        : (target > 33 ? inRound % 33 : inRound),
+                        : (target > 33 || target == 0 ? inRound % 33 : inRound),
                     gold: pal.gold,
                     bead: pal.primary,
                     accent: pal.accent,
@@ -3446,7 +3651,9 @@ class TasbihTab extends StatelessWidget {
                             fontWeight: FontWeight.w300,
                             height: 1.0)),
                     const SizedBox(height: 2),
-                    Text('${tr('tasbih_target')} $target · ×$rounds',
+                    Text(target == 0
+                        ? '${tr('unlimited')} · ×$rounds'
+                        : '${tr('tasbih_target')} $target · ×$rounds',
                         style: Theme.of(context).textTheme.bodySmall),
                   ]),
                 ),
@@ -3456,11 +3663,11 @@ class TasbihTab extends StatelessWidget {
         ),
         const SizedBox(height: 26),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          for (final t in [33, 99, 100])
+          for (final t in [33, 99, 0])
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: ChoiceChip(
-                label: Text('$t'),
+                label: Text(t == 0 ? tr('unlimited') : '$t'),
                 selected: target == t,
                 onSelected: (_) => appState.setTasbihTarget(t),
               ),
@@ -3581,285 +3788,52 @@ class MoreTab extends StatelessWidget {
 //  15. Einstellungen
 // =============================================================================
 
-class SettingsPage extends StatelessWidget {
+/// Gemerkter Zustand der Einstellungen: welcher Bereich offen war und wie weit
+/// gescrollt wurde. Wird beim bewussten Zurück oben links geleert.
+String? _openSettingsSection;
+double _settingsScroll = 0;
+
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  late final ScrollController _scroll =
+      ScrollController(initialScrollOffset: _settingsScroll);
 
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: appState,
-      builder: (context, _) {
-        final theme = Theme.of(context);
-        return Scaffold(
-          appBar: AppBar(title: Text(tr('tab_settings'))),
-          body: ListView(
-            padding: const EdgeInsets.only(bottom: 40),
-            children: [
-              _section(context, tr('settings_language')),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SegmentedButton<AppLang>(
-                  segments: const [
-                    ButtonSegment(value: AppLang.de, label: Text('Deutsch')),
-                    ButtonSegment(value: AppLang.tr, label: Text('Türkçe')),
-                    ButtonSegment(value: AppLang.en, label: Text('English')),
-                  ],
-                  selected: {appState.lang},
-                  onSelectionChanged: (s) => appState.setLang(s.first),
-                ),
-              ),
+  void dispose() {
+    if (_scroll.hasClients) _settingsScroll = _scroll.offset;
+    _scroll.dispose();
+    super.dispose();
+  }
 
-              _section(context, tr('settings_appearance')),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SegmentedButton<ThemeMode>(
-                  segments: [
-                    ButtonSegment(value: ThemeMode.system, label: Text(tr('theme_system'))),
-                    ButtonSegment(value: ThemeMode.light, label: Text(tr('theme_light'))),
-                    ButtonSegment(value: ThemeMode.dark, label: Text(tr('theme_dark'))),
-                  ],
-                  selected: {appState.themeMode},
-                  onSelectionChanged: (s) => appState.setTheme(s.first),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(tr('settings_palette'), style: theme.textTheme.bodyMedium),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 92,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    for (final entry in palettes.entries)
-                      _PaletteChip(value: entry.key, data: entry.value),
-                  ],
-                ),
-              ),
-              SwitchListTile(
-                value: appState.use24h,
-                onChanged: appState.setUse24h,
-                title: Text(tr('settings_time_format')),
-                secondary: const Icon(Icons.access_time),
-              ),
+  void _leave() {
+    _openSettingsSection = null;
+    _settingsScroll = 0;
+    Navigator.pop(context);
+  }
 
-              _section(context, tr('time_source')),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Card(
-                  child: Column(children: [
-                    RadioListTile<TimeSource>(
-                      value: TimeSource.calculated,
-                      groupValue: appState.timeSource,
-                      onChanged: (v) => appState.setTimeSource(v!),
-                      title: Text(tr('src_calc')),
-                      subtitle: Text(tr('src_calc_sub')),
-                    ),
-                    const Divider(height: 1),
-                    RadioListTile<TimeSource>(
-                      value: TimeSource.online,
-                      groupValue: appState.timeSource,
-                      onChanged: (v) {
-                        appState.setTimeSource(v!);
-                        appState.syncOnline();
-                      },
-                      title: Text(tr('src_online')),
-                      subtitle: Text(tr('src_online_sub')),
-                    ),
-                    if (appState.timeSource == TimeSource.online)
-                      ListTile(
-                        dense: true,
-                        leading: const Icon(Icons.history),
-                        title: Text(tr('last_sync')),
-                        subtitle: Text(appState.lastSync == null
-                            ? tr('never')
-                            : '${longDate(appState.lastSync!)} · ${fmtTime(appState.lastSync!)}'),
-                        trailing: appState.syncing
-                            ? const SizedBox(
-                                width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                            : TextButton(
-                                onPressed: () async {
-                                  final ok = await appState.syncOnline();
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                        content: Text(ok ? tr('sync_ok') : tr('sync_failed'))));
-                                  }
-                                },
-                                child: Text(tr('sync_now')),
-                              ),
-                      ),
-                    const Divider(height: 1),
-                    RadioListTile<TimeSource>(
-                      value: TimeSource.custom,
-                      groupValue: appState.timeSource,
-                      onChanged: (v) => appState.setTimeSource(v!),
-                      title: Text(tr('src_custom')),
-                      subtitle: Text(tr('src_custom_sub')),
-                    ),
-                    ListTile(
-                      dense: true,
-                      leading: const Icon(Icons.edit_note),
-                      title: Text(tr('custom_table')),
-                      subtitle: Text('${tr('stored_days')}: ${appState.customTimes.length}'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.push(
-                          context, MaterialPageRoute(builder: (_) => const CustomTablePage())),
-                    ),
-                  ]),
-                ),
-              ),
-
-              _section(context, tr('settings_calculation')),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Card(
-                  child: Column(children: [
-                    ListTile(
-                      leading: const Icon(Icons.wb_sunny_outlined),
-                      title: Text(tr('asr_method')),
-                      subtitle: Text(appState.asrShadowFactor == 1
-                          ? tr('asr_first')
-                          : tr('asr_second')),
-                      trailing: Switch(
-                        value: appState.asrShadowFactor == 2,
-                        onChanged: (v) {
-                          appState.setAsrFactor(v ? 2 : 1);
-                          if (appState.timeSource == TimeSource.online) appState.syncOnline();
-                        },
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    SwitchListTile(
-                      value: appState.useTemkin,
-                      onChanged: appState.setUseTemkin,
-                      secondary: const Icon(Icons.timer_outlined),
-                      title: Text(tr('temkin')),
-                      subtitle: Text(tr('temkin_hint')),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.brightness_4_outlined),
-                      title: Text(tr('angles')),
-                      subtitle: Text(
-                          '${tr('fajr_angle')} ${appState.fajrAngle.toStringAsFixed(1)}°  ·  '
-                          '${tr('isha_angle')} ${appState.ishaAngle.toStringAsFixed(1)}°'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.push(
-                          context, MaterialPageRoute(builder: (_) => const AnglesPage())),
-                    ),
-                  ]),
-                ),
-              ),
-
-              _section(context, tr('notifications')),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Card(
-                  child: ListTile(
-                    enabled: false,
-                    leading: Icon(Icons.notifications_none, color: pal.gold),
-                    title: Text(tr('notifications')),
-                    subtitle: Text('${tr('coming_soon')} · ${tr('notifications_locked')}'),
-                    trailing: Icon(Icons.lock, size: 18, color: pal.gold),
-                  ),
-                ),
-              ),
-
-              _section(context, tr('kerahat')),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                child: Text(tr('kerahat_hint'),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Card(
-                  child: Column(children: [
-                    SwitchListTile(
-                      value: appState.showKerahat,
-                      onChanged: appState.setShowKerahat,
-                      secondary: const Icon(Icons.do_not_disturb_on_outlined),
-                      title: Text(tr('kerahat_show')),
-                    ),
-                    if (appState.showKerahat) ...[
-                      const Divider(height: 1),
-                      _minutesRow(context, tr('k_israk'), appState.kerahatSunriseMin,
-                          (v) => appState.setKerahatMinutes(sunrise: v)),
-                      _minutesRow(context, tr('k_istiva'), appState.kerahatIstivaMin,
-                          (v) => appState.setKerahatMinutes(istiva: v)),
-                      _minutesRow(context, tr('k_isfirar'), appState.kerahatSunsetMin,
-                          (v) => appState.setKerahatMinutes(sunset: v)),
-                    ],
-                  ]),
-                ),
-              ),
-
-              _section(context, tr('settings_offsets')),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                child: Text(tr('settings_offsets_hint'),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Card(
-                  child: Column(children: [
-                    for (final p in P.values)
-                      ListTile(
-                        dense: true,
-                        leading: Icon(p.icon, size: 20),
-                        title: Text(p.label),
-                        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: () => appState.setOffset(p, (appState.offsets[p] ?? 0) - 1),
-                          ),
-                          SizedBox(
-                            width: 42,
-                            child: Text(
-                              '${(appState.offsets[p] ?? 0) > 0 ? '+' : ''}${appState.offsets[p] ?? 0}',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleMedium,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () => appState.setOffset(p, (appState.offsets[p] ?? 0) + 1),
-                          ),
-                        ]),
-                      ),
-                  ]),
-                ),
-              ),
-
-              _section(context, tr('location')),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Card(
-                  child: ListTile(
-                    leading: Icon(appState.manualLocation ? Icons.push_pin : Icons.my_location),
-                    title: Text(appState.manualLocation ? tr('loc_manual') : tr('loc_auto')),
-                    subtitle: Text(appState.locationLabel),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => const LocationPickerPage())),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
+  Widget _section(String id, String title, IconData icon, List<Widget> children) {
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: ExpansionTile(
+        key: PageStorageKey(id),
+        initiallyExpanded: _openSettingsSection == id,
+        onExpansionChanged: (open) => _openSettingsSection = open ? id : null,
+        leading: Icon(icon, color: pal.gold),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+        children: children,
+      ),
     );
   }
 
-  Widget _minutesRow(
-          BuildContext context, String label, int value, ValueChanged<int> onChanged) =>
-      ListTile(
+  Widget _minutesRow(String label, int value, ValueChanged<int> onChanged) => ListTile(
         dense: true,
         title: Text(label),
         subtitle: Text('$value ${tr('minutes')}'),
@@ -3875,15 +3849,334 @@ class SettingsPage extends StatelessWidget {
         ]),
       );
 
-  Widget _section(BuildContext context, String title) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
-        child: Text(title.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  letterSpacing: 1.4,
-                  fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.primary,
-                )),
-      );
+  Future<void> _pickMethod() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(tr('method')),
+        contentPadding: const EdgeInsets.only(top: 12),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final m in kMethods)
+                RadioListTile<String>(
+                  value: m.id,
+                  groupValue: appState.methodId,
+                  onChanged: (v) {
+                    appState.applyMethod(v!);
+                    Navigator.pop(context);
+                  },
+                  title: Text(m.name, style: const TextStyle(fontSize: 14)),
+                  subtitle: Text(
+                    m.ishaInterval > 0
+                        ? '${m.fajr}° · ${tr('isha_interval')} ${m.ishaInterval} ${tr('minutes')}'
+                        : '${m.fajr}° / ${m.isha}°'
+                            '${m.asr == 2 ? ' · ${tr('asr_second')}' : ''}',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ),
+              if (appState.methodId == 'custom')
+                ListTile(
+                  leading: const Icon(Icons.tune),
+                  title: Text(tr('method_custom')),
+                  subtitle: Text('${appState.fajrAngle.toStringAsFixed(1)}° / '
+                      '${appState.ishaAngle.toStringAsFixed(1)}°'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(tr('tab_settings')),
+            leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: _leave),
+          ),
+          body: ListView(
+            controller: _scroll,
+            padding: const EdgeInsets.only(top: 12, bottom: 40),
+            children: [
+              // --- Sprache und Darstellung ---
+              _section('appearance', tr('settings_appearance'), Icons.palette_outlined, [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: SegmentedButton<AppLang>(
+                    segments: const [
+                      ButtonSegment(value: AppLang.de, label: Text('DE')),
+                      ButtonSegment(value: AppLang.tr, label: Text('TR')),
+                      ButtonSegment(value: AppLang.en, label: Text('EN')),
+                    ],
+                    selected: {appState.lang},
+                    onSelectionChanged: (s) => appState.setLang(s.first),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  child: SegmentedButton<ThemeMode>(
+                    segments: [
+                      ButtonSegment(value: ThemeMode.system, label: Text(tr('theme_system'))),
+                      ButtonSegment(value: ThemeMode.light, label: Text(tr('theme_light'))),
+                      ButtonSegment(value: ThemeMode.dark, label: Text(tr('theme_dark'))),
+                    ],
+                    selected: {appState.themeMode},
+                    onSelectionChanged: (s) => appState.setTheme(s.first),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 92,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    children: [
+                      for (final entry in palettes.entries)
+                        _PaletteChip(value: entry.key, data: entry.value),
+                    ],
+                  ),
+                ),
+                SwitchListTile(
+                  value: appState.use24h,
+                  onChanged: appState.setUse24h,
+                  title: Text(tr('settings_time_format')),
+                  secondary: const Icon(Icons.access_time),
+                ),
+              ]),
+
+              // --- Widgets ---
+              _section('widgets', tr('widgets'), Icons.widgets_outlined, [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(tr('widget_hint'),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(height: 1.4, color: theme.colorScheme.outline)),
+                ),
+                ListTile(
+                  dense: true,
+                  title: Text(tr('widget_alpha')),
+                  subtitle: Text('${(appState.widgetAlpha / 255 * 100).round()} %'),
+                ),
+                Slider(
+                  value: appState.widgetAlpha.toDouble(),
+                  min: 40,
+                  max: 255,
+                  divisions: 43,
+                  onChanged: (v) => appState.setWidgetAlpha(v.round()),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(tr('widget_refresh_note'),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(height: 1.4, color: theme.colorScheme.outline)),
+                ),
+              ]),
+
+              // --- Benachrichtigungen (noch gesperrt) ---
+              Card(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: ListTile(
+                  enabled: false,
+                  leading: Icon(Icons.notifications_none, color: pal.gold),
+                  title: Text(tr('notifications')),
+                  subtitle: Text('${tr('coming_soon')} · ${tr('notifications_locked')}'),
+                  trailing: Icon(Icons.lock, size: 18, color: pal.gold),
+                ),
+              ),
+
+              // --- Zeitquelle ---
+              _section('source', tr('time_source'), Icons.source_outlined, [
+                RadioListTile<TimeSource>(
+                  value: TimeSource.calculated,
+                  groupValue: appState.timeSource,
+                  onChanged: (v) => appState.setTimeSource(v!),
+                  title: Text(tr('src_calc')),
+                  subtitle: Text(tr('src_calc_sub')),
+                ),
+                RadioListTile<TimeSource>(
+                  value: TimeSource.online,
+                  groupValue: appState.timeSource,
+                  onChanged: (v) {
+                    appState.setTimeSource(v!);
+                    appState.syncOnline();
+                  },
+                  title: Text(tr('src_online')),
+                  subtitle: Text(tr('src_online_sub')),
+                ),
+                if (appState.timeSource == TimeSource.online)
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.history),
+                    title: Text(tr('last_sync')),
+                    subtitle: Text(appState.lastSync == null
+                        ? tr('never')
+                        : '${longDate(appState.lastSync!)} · ${fmtTime(appState.lastSync!)}'),
+                    trailing: appState.syncing
+                        ? const SizedBox(
+                            width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : TextButton(
+                            onPressed: () async {
+                              final ok = await appState.syncOnline();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(ok ? tr('sync_ok') : tr('sync_failed'))));
+                              }
+                            },
+                            child: Text(tr('sync_now')),
+                          ),
+                  ),
+                RadioListTile<TimeSource>(
+                  value: TimeSource.custom,
+                  groupValue: appState.timeSource,
+                  onChanged: (v) => appState.setTimeSource(v!),
+                  title: Text(tr('src_custom')),
+                  subtitle: Text(tr('src_custom_sub')),
+                ),
+                ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.edit_note),
+                  title: Text(tr('custom_table')),
+                  subtitle: Text('${tr('stored_days')}: ${appState.customTimes.length}'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                      context, MaterialPageRoute(builder: (_) => const CustomTablePage())),
+                ),
+              ]),
+
+              // --- Berechnung ---
+              _section('calc', tr('settings_calculation'), Icons.calculate_outlined, [
+                ListTile(
+                  leading: const Icon(Icons.public),
+                  title: Text(tr('method')),
+                  subtitle: Text(appState.methodId == 'custom'
+                      ? tr('method_custom')
+                      : appState.method.name),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _pickMethod,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(tr('method_hint'),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.outline)),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.wb_sunny_outlined),
+                  title: Text(tr('asr_method')),
+                  subtitle:
+                      Text(appState.asrShadowFactor == 1 ? tr('asr_first') : tr('asr_second')),
+                  trailing: Switch(
+                    value: appState.asrShadowFactor == 2,
+                    onChanged: (v) {
+                      appState.setAsrFactor(v ? 2 : 1);
+                      if (appState.timeSource == TimeSource.online) appState.syncOnline();
+                    },
+                  ),
+                ),
+                SwitchListTile(
+                  value: appState.useTemkin,
+                  onChanged: appState.setUseTemkin,
+                  secondary: const Icon(Icons.timer_outlined),
+                  title: Text(tr('temkin')),
+                  subtitle: Text(tr('temkin_hint')),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.brightness_4_outlined),
+                  title: Text(tr('angles')),
+                  subtitle: Text(appState.ishaIntervalMin > 0
+                      ? '${appState.fajrAngle.toStringAsFixed(1)}° · '
+                          '${tr('isha_interval')} ${appState.ishaIntervalMin} ${tr('minutes')}'
+                      : '${appState.fajrAngle.toStringAsFixed(1)}° / '
+                          '${appState.ishaAngle.toStringAsFixed(1)}°'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                      context, MaterialPageRoute(builder: (_) => const AnglesPage())),
+                ),
+              ]),
+
+              // --- Kerahat ---
+              _section('kerahat', tr('kerahat'), Icons.do_not_disturb_on_outlined, [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(tr('kerahat_hint'),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.outline)),
+                ),
+                SwitchListTile(
+                  value: appState.showKerahat,
+                  onChanged: appState.setShowKerahat,
+                  secondary: const Icon(Icons.visibility_outlined),
+                  title: Text(tr('kerahat_show')),
+                ),
+                if (appState.showKerahat) ...[
+                  _minutesRow(tr('k_israk'), appState.kerahatSunriseMin,
+                      (v) => appState.setKerahatMinutes(sunrise: v)),
+                  _minutesRow(tr('k_istiva'), appState.kerahatIstivaMin,
+                      (v) => appState.setKerahatMinutes(istiva: v)),
+                  _minutesRow(tr('k_isfirar'), appState.kerahatSunsetMin,
+                      (v) => appState.setKerahatMinutes(sunset: v)),
+                ],
+              ]),
+
+              // --- Feinjustierung ---
+              _section('offsets', tr('settings_offsets'), Icons.tune, [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Text(tr('settings_offsets_hint'),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.colorScheme.outline)),
+                ),
+                for (final p in P.values)
+                  ListTile(
+                    dense: true,
+                    leading: Icon(p.icon, size: 20),
+                    title: Text(p.label),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        onPressed: () => appState.setOffset(p, (appState.offsets[p] ?? 0) - 1),
+                      ),
+                      SizedBox(
+                        width: 42,
+                        child: Text(
+                          '${(appState.offsets[p] ?? 0) > 0 ? '+' : ''}${appState.offsets[p] ?? 0}',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: () => appState.setOffset(p, (appState.offsets[p] ?? 0) + 1),
+                      ),
+                    ]),
+                  ),
+              ]),
+
+              // --- Standort ---
+              _section('location', tr('location'), Icons.place_outlined, [
+                ListTile(
+                  leading: Icon(appState.manualLocation ? Icons.push_pin : Icons.my_location),
+                  title: Text(appState.manualLocation ? tr('loc_manual') : tr('loc_auto')),
+                  subtitle: Text(appState.locationLabel),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const LocationPickerPage())),
+                ),
+              ]),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _PaletteChip extends StatelessWidget {
@@ -4776,6 +5069,9 @@ const List<SpecialDay> kSpecialDays = [
   return null;
 }
 
+/// Zuletzt betrachteter Monat, damit der Kalender dort wieder aufgeht.
+DateTime? _rememberedMonth;
+
 class CalendarPage extends StatefulWidget {
   final DateTime initial;
   const CalendarPage({super.key, required this.initial});
@@ -4784,7 +5080,16 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  late DateTime _month = DateTime(widget.initial.year, widget.initial.month);
+  late DateTime _month =
+      _rememberedMonth ?? DateTime(widget.initial.year, widget.initial.month);
+
+  void _shiftMonth(int delta) {
+    setState(() {
+      _month = DateTime(_month.year, _month.month + delta);
+      _rememberedMonth = _month;
+    });
+    HapticFeedback.selectionClick();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -4805,13 +5110,28 @@ class _CalendarPageState extends State<CalendarPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(tr('calendar'))),
-      body: ListView(
+      appBar: AppBar(
+        title: Text(tr('calendar')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _rememberedMonth = null; // bewusstes Zurück löscht die Erinnerung
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: GestureDetector(
+        onHorizontalDragEnd: (d) {
+          final v = d.primaryVelocity ?? 0;
+          if (v < -250) _shiftMonth(1);
+          if (v > 250) _shiftMonth(-1);
+        },
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Row(children: [
             IconButton(
-              onPressed: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
+              onPressed: () => _shiftMonth(-1),
               icon: const Icon(Icons.chevron_left),
             ),
             Expanded(
@@ -4824,7 +5144,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ]),
             ),
             IconButton(
-              onPressed: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
+              onPressed: () => _shiftMonth(1),
               icon: const Icon(Icons.chevron_right),
             ),
           ]),
@@ -4863,7 +5183,10 @@ class _CalendarPageState extends State<CalendarPage> {
                 special: sp,
                 isToday: isToday,
                 isSelected: isSelected,
-                onTap: () => Navigator.pop(context, d),
+                onTap: () {
+                  _rememberedMonth = _month;
+                  Navigator.pop(context, d);
+                },
               );
             },
           ),
@@ -4896,7 +5219,12 @@ class _CalendarPageState extends State<CalendarPage> {
           Text(tr('hijri_note'),
               style: theme.textTheme.bodySmall
                   ?.copyWith(height: 1.5, color: theme.colorScheme.outline)),
+          const SizedBox(height: 10),
+          Text(tr('swipe_hint'),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.outline)),
         ],
+      ),
       ),
     );
   }
@@ -5127,6 +5455,31 @@ class FriendsFeed extends StatelessWidget {
         Text(tr('my_code'), style: theme.textTheme.titleSmall),
         const SizedBox(height: 4),
         Text(tr('my_code_hint'),
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+        if (appState.userName.trim().isEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: pal.gold.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(children: [
+              Icon(Icons.person_outline, size: 16, color: pal.gold),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(tr('name_needed'),
+                    style: theme.textTheme.bodySmall?.copyWith(color: pal.gold)),
+              ),
+            ]),
+          ),
+        ],
+        const SizedBox(height: 6),
+        SelectableText(appState.buildShareCode(),
+            style: theme.textTheme.bodyMedium?.copyWith(
+                fontFeatures: const [FontFeature.tabularFigures()])),
+        const SizedBox(height: 4),
+        Text(tr('code_length_note'),
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         const SizedBox(height: 10),
         Row(children: [
