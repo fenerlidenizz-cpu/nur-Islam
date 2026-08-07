@@ -595,6 +595,17 @@ const Map<String, List<String>> _strings = {
     'Baglayici bir fikih goruesunun yerini tutmaz. Fiyatlari guencel tutman gerekir.',
     'Not a substitute for binding religious guidance. Please keep prices up to date.',
   ],
+  'fasting_tracker': ['Fasten-Tracker', 'Oruç Takibi', 'Fasting tracker'],
+  'fasting_intro': [
+    'Halte Pflicht- und freiwillige Fastentage fest – Ramadan, Montag/Donnerstag oder Ayyam al-Bid. Alles bleibt nur auf deinem Gerät.',
+    'Farz ve nafile oruç günlerini kaydet – Ramazan, Pazartesi/Perşembe veya Eyyam-ı Bid. Her şey sadece cihazında kalır.',
+    'Track obligatory and voluntary fasting days – Ramadan, Monday/Thursday or Ayyam al-Bid. Everything stays only on your device.',
+  ],
+  'fasting_today': ['Heute gefastet', 'Bugün oruçluyum', 'Fasted today'],
+  'fasting_streak': ['Aktuelle Serie', 'Güncel seri', 'Current streak'],
+  'fasting_days_suffix': ['Tage', 'gün', 'days'],
+  'fasting_month_count': ['Diesen Monat', 'Bu ay', 'This month'],
+  'fasting_last_days': ['Letzte Tage', 'Son günler', 'Recent days'],
 };
 
 String tr(String key) {
@@ -1083,6 +1094,7 @@ class AppState extends ChangeNotifier {
   // Tracker
   String userName = '';
   Map<String, List<String>> prayedDays = {}; // Datum -> Namen der Gebete
+  Map<String, bool> fastedDays = {}; // Datum -> gefastet
   List<Friend> friends = [];
 
   late SharedPreferences _p;
@@ -1141,6 +1153,11 @@ class AppState extends ChangeNotifier {
     onlineTimes = _decodeTable(_p.getString('onlineTimes'));
     customTimes = _decodeTable(_p.getString('customTimes'));
     prayedDays = _decodeTable(_p.getString('prayedDays'));
+    final fd = _p.getString('fastedDays');
+    if (fd != null) {
+      fastedDays = (jsonDecode(fd) as Map<String, dynamic>)
+          .map((k, v) => MapEntry(k, v as bool));
+    }
     final ls = _p.getInt('lastSync');
     if (ls != null) lastSync = DateTime.fromMillisecondsSinceEpoch(ls);
 
@@ -1444,6 +1461,38 @@ class AppState extends ChangeNotifier {
       day = day.subtract(const Duration(days: 1));
     }
     return count;
+  }
+
+  // --- Fasten-Tracker ---
+  bool hasFasted(DateTime day) => fastedDays[dayKey(day)] ?? false;
+
+  void toggleFasted(DateTime day) {
+    final key = dayKey(day);
+    final cur = fastedDays[key] ?? false;
+    fastedDays[key] = !cur;
+    if (!cur) HapticFeedback.selectionClick();
+    _p.setString('fastedDays', jsonEncode(fastedDays));
+    notifyListeners();
+  }
+
+  int get fastingStreak {
+    var count = 0;
+    var day = DateTime.now();
+    if (!hasFasted(day)) day = day.subtract(const Duration(days: 1));
+    while (hasFasted(day)) {
+      count++;
+      day = day.subtract(const Duration(days: 1));
+    }
+    return count;
+  }
+
+  int get fastedThisMonth {
+    final now = DateTime.now();
+    var n = 0;
+    for (var i = 1; i <= now.day; i++) {
+      if (hasFasted(DateTime(now.year, now.month, i))) n++;
+    }
+    return n;
   }
 
   List<int> get lastSevenDays {
@@ -3845,6 +3894,14 @@ class MoreTab extends StatelessWidget {
               onTap: () => Navigator.push(
                   context, MaterialPageRoute(builder: (_) => const ZakatPage())),
             ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.no_food_outlined),
+              title: Text(tr('fasting_tracker')),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                  context, MaterialPageRoute(builder: (_) => const FastingTrackerPage())),
+            ),
             ]),
           ),
         ),
@@ -4803,6 +4860,109 @@ class _ZakatPageState extends State<ZakatPage> {
               const SizedBox(height: 16),
               Text(tr('zakat_disclaimer'),
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ============================================================
+// Fasten-Tracker
+// ============================================================
+class FastingTrackerPage extends StatelessWidget {
+  const FastingTrackerPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final today = DateTime.now();
+        final fastedToday = appState.hasFasted(today);
+        final streak = appState.fastingStreak;
+        final monthCount = appState.fastedThisMonth;
+
+        return Scaffold(
+          appBar: AppBar(title: Text(tr('fasting_tracker'))),
+          body: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Text(tr('fasting_intro'), style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 20),
+              Card(
+                child: SwitchListTile(
+                  title: Text(tr('fasting_today')),
+                  value: fastedToday,
+                  onChanged: (_) => appState.toggleFasted(today),
+                  secondary: Icon(Icons.no_food_outlined, color: pal.gold),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(children: [
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(children: [
+                        Text('$streak', style: theme.textTheme.headlineMedium
+                            ?.copyWith(color: pal.gold, fontWeight: FontWeight.bold)),
+                        Text(
+                            '${tr('fasting_streak')} (${tr('fasting_days_suffix')})',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall),
+                      ]),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(children: [
+                        Text('$monthCount', style: theme.textTheme.headlineMedium
+                            ?.copyWith(color: pal.gold, fontWeight: FontWeight.bold)),
+                        Text(tr('fasting_month_count'),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall),
+                      ]),
+                    ),
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 24),
+              Text(tr('fasting_last_days'), style: theme.textTheme.titleSmall),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(35, (i) {
+                  final d = today.subtract(Duration(days: 34 - i));
+                  final done = appState.hasFasted(d);
+                  return GestureDetector(
+                    onTap: () => appState.toggleFasted(d),
+                    child: Container(
+                      width: 36,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: done ? pal.gold.withValues(alpha: 0.85) : theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Text('${d.day}',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: done ? Colors.black : theme.colorScheme.onSurface)),
+                        if (done) const Icon(Icons.check, size: 12, color: Colors.black),
+                      ]),
+                    ),
+                  );
+                }),
+              ),
             ],
           ),
         );
