@@ -343,6 +343,14 @@ jobs:
                       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                   )
               }
+
+              fun refreshAll(context: Context) {
+                  val mgr = AppWidgetManager.getInstance(context)
+                  val prayerIds = mgr.getAppWidgetIds(ComponentName(context, PrayerWidgetProvider::class.java))
+                  val qiblaIds = mgr.getAppWidgetIds(ComponentName(context, QiblaWidgetProvider::class.java))
+                  if (prayerIds.isNotEmpty()) PrayerWidgetProvider().onUpdate(context, mgr, prayerIds)
+                  if (qiblaIds.isNotEmpty()) QiblaWidgetProvider().onUpdate(context, mgr, qiblaIds)
+              }
           }
 
           /** Breites Feld mit den fuenf Gebetszeiten. */
@@ -404,7 +412,7 @@ jobs:
                       }
                   }
 
-                  views.setOnClickPendingIntent(R.id.times_root, WidgetData.openApp(context))
+                  views.setOnClickPendingIntent(R.id.times_root, WidgetData.openApp(context, "times", 0))
                   manager.updateAppWidget(id, views)
               }
           }
@@ -528,11 +536,16 @@ jobs:
                   super.configureFlutterEngine(flutterEngine)
                   methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
                   methodChannel?.setMethodCallHandler { call, result ->
-                      if (call.method == "getInitialRoute") {
-                          result.success(pendingRoute)
-                          pendingRoute = null
-                      } else {
-                          result.notImplemented()
+                      when (call.method) {
+                          "getInitialRoute" -> {
+                              result.success(pendingRoute)
+                              pendingRoute = null
+                          }
+                          "refreshWidgets" -> {
+                              WidgetData.refreshAll(applicationContext)
+                              result.success(null)
+                          }
+                          else -> result.notImplemented()
                       }
                   }
               }
