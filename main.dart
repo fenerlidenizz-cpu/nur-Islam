@@ -511,6 +511,18 @@ const Map<String, List<String>> _strings = {
   'skip': ['Überspringen', 'Atla', 'Skip'],
   'next': ['Weiter', 'Devam', 'Next'],
   'start': ['Los geht\'s', 'Başla', 'Let\'s go'],
+  'tut0_t': ['As-salamu alaikum', 'Selamün aleyküm', 'As-salamu alaikum'],
+  'tut0_b': [
+    'Schön, dass du da bist. "Nur" bedeutet auf Arabisch "Licht" — der Name dieser '
+        'App erinnert daran, dass der Glaube Orientierung und Klarheit in den Alltag '
+        'bringen kann. Auf den nächsten Seiten zeigen wir dir kurz, wie die App '
+        'funktioniert.',
+    '"Nur" Arapçada "ışık" anlamına gelir — bu isim, imanın günlük hayata kattığı '
+        'aydınlığı hatırlatır. Sonraki sayfalarda uygulamanın nasıl çalıştığını kısaca '
+        'göstereceğiz.',
+    '"Nur" means "light" in Arabic — the name is a reminder of the clarity faith can '
+        'bring to daily life. The next pages briefly show you how the app works.',
+  ],
   'tut1_t': ['Willkommen', 'Hoş geldin', 'Welcome'],
   'tut1_b': [
     'Nur Islam zeigt dir Gebetszeiten, die Qibla-Richtung und mehr — kostenlos, '
@@ -635,7 +647,7 @@ const Map<String, List<String>> _strings = {
   'zakat_gold_price': ['Goldpreis pro Gramm', 'Gram altin fiyati', 'Gold price per gram'],
   'zakat_silver_grams': ['Silber (Gramm)', 'Gumus (gram)', 'Silver (grams)'],
   'zakat_silver_price': ['Silberpreis pro Gramm', 'Gram gumus fiyati', 'Silver price per gram'],
-  'zakat_other_assets': ['Geschaeftsvermoegen & Sonstiges', 'Ticari mal ve diger varliklar', 'Business assets & other'],
+  'zakat_other_assets': ['Geschäftsvermögen & Sonstiges', 'Ticari mal ve diger varliklar', 'Business assets & other'],
   'zakat_debts': ['Kurzfristige Schulden', 'Kisa vadeli borclar', 'Short-term debts'],
   'zakat_nisab_basis': ['Nisab-Grenze berechnen nach', 'Nisap sinirini hesapla', 'Calculate Nisab threshold using'],
   'zakat_basis_gold': ['Gold (85 g)', 'Altin (85 g)', 'Gold (85 g)'],
@@ -667,51 +679,75 @@ const Map<String, List<String>> _strings = {
   'dialog_close': ['Verstanden', 'Anladım', 'Got it'],
   'zakat_info_nisab_t': ['Was ist die Nisab-Grenze?', 'Nisap sınırı nedir?', 'What is the Nisab threshold?'],
   'zakat_info_nisab_b': [
-    'Die Nisab-Grenze ist der Mindestbetrag an Vermoegen, ab dem Zakat ueberhaupt faellig wird. Sie orientiert sich am Gegenwert von 85 g Gold oder 595 g Silber. Liegt dein zakatfaehiges Vermoegen darunter, musst du kein Zakat zahlen.',
+    'Die Nisab-Grenze ist der Mindestbetrag an Vermögen, ab dem Zakat überhaupt fällig wird. Sie orientiert sich am Gegenwert von 85 g Gold oder 595 g Silber. Liegt dein zakatfähiges Vermögen darunter, musst du kein Zakat zahlen.',
     'Nisap siniri, zekatin farz oldugu asgari varlik miktaridir. 85 g altin veya 595 g gumusun karsiligina gore hesaplanir. Varligin bunun altindaysa zekat odemen gerekmez.',
     'The Nisab threshold is the minimum amount of wealth above which Zakat becomes due. It is based on the value of 85 g of gold or 595 g of silver. If your zakatable assets are below it, no Zakat is due.',
   ],
-  'zakat_info_other_t': ['Geschaeftsvermoegen & Sonstiges', 'Ticari mal ve diger varliklar', 'Business assets & other'],
+  'zakat_info_other_t': ['Geschäftsvermögen & Sonstiges', 'Ticari mal ve diger varliklar', 'Business assets & other'],
   'zakat_info_other_b': [
-    'Hierzu zaehlen z. B. Warenbestand und Handelsware zum aktuellen Verkaufswert, Firmenanteile, vermietete Gegenstaende oder andere Vermoegenswerte, die nicht Bargeld, Gold oder Silber sind. Selbst genutzte Gegenstaende wie dein Auto oder deine Wohnung zaehlen nicht dazu.',
+    'Hierzu zählen z. B. Warenbestand und Handelsware zum aktuellen Verkaufswert, Firmenanteile, vermietete Gegenstände oder andere Vermögenswerte, die nicht Bargeld, Gold oder Silber sind. Selbst genutzte Gegenstände wie dein Auto oder deine Wohnung zählen nicht dazu.',
     'Buna satis degeri uzerinden mal stogu, ticari esya, sirket paylari, kiraya verilen esyalar veya nakit, altin ya da gumus disindaki diger varliklar dahildir. Kendi kullandigin araba veya ev buna dahil degildir.',
     'This includes things like trade goods and inventory at current sale value, business shares, rented-out items, or other assets that are not cash, gold or silver. Items for personal use, such as your car or home, do not count.',
   ],
-  'zakat_info_debt_t': ['Was zaehlt als kurzfristige Schulden?', 'Kisa vadeli borc nedir?', 'What counts as short-term debt?'],
+  'zakat_info_debt_t': ['Was zählt als kurzfristige Schulden?', 'Kisa vadeli borc nedir?', 'What counts as short-term debt?'],
   'zakat_info_debt_b': [
-    'Gemeint sind Schulden, die innerhalb der naechsten 12 Monate faellig werden, z. B. offene Rechnungen, kurzfristige Kredite oder faellige Miete. Sie werden von deinem Vermoegen abgezogen, bevor die Nisab-Grenze geprueft wird. Langfristige Schulden (z. B. eine Hausfinanzierung ueber viele Jahre) werden meist nicht in voller Hoehe abgezogen.',
+    'Gemeint sind Schulden, die innerhalb der nächsten 12 Monate fällig werden, z. B. offene Rechnungen, kurzfristige Kredite oder fällige Miete. Sie werden von deinem Vermögen abgezogen, bevor die Nisab-Grenze geprüft wird. Langfristige Schulden (z. B. eine Hausfinanzierung über viele Jahre) werden meist nicht in voller Höhe abgezogen.',
     'Onumuzdeki 12 ay icinde odenmesi gereken borclardir, orn. acik faturalar, kisa vadeli krediler veya odenmemis kira. Nisap sinirina bakilmadan once varligindan dusulur. Uzun vadeli borclar (orn. yillara yayilan konut kredisi) genelde tam olarak dusulmez.',
     'This means debts due within the next 12 months, e.g. open invoices, short-term loans or outstanding rent. They are subtracted from your assets before checking the Nisab threshold. Long-term debts (e.g. a mortgage spread over many years) are usually not deducted in full.',
   ],
   'zakat_info_general_t': ['Wie funktioniert die Zakat-Berechnung?', 'Zekat hesaplamasi nasil calisir?', 'How does the Zakat calculation work?'],
   'zakat_info_general_b': [
-    'Zuerst werden alle zakatfaehigen Vermoegenswerte (Bargeld, Gold, Silber, Geschaeftsvermoegen) addiert und die kurzfristigen Schulden abgezogen. Liegt das Ergebnis ueber der Nisab-Grenze, sind 2,5% davon als Zakat faellig. Diese Berechnung ersetzt keine verbindliche Fiqh-Beratung.',
+    'Zuerst werden alle zakatfähigen Vermögenswerte (Bargeld, Gold, Silber, Geschäftsvermögen) addiert und die kurzfristigen Schulden abgezogen. Liegt das Ergebnis über der Nisab-Grenze, sind 2,5% davon als Zakat fällig. Diese Berechnung ersetzt keine verbindliche Fiqh-Beratung.',
     'Once tum zekata tabi varliklar (nakit, altin, gumus, ticari mal) toplanir ve kisa vadeli borclar dusulur. Sonuc nisap sinirinin ustundeyse, bunun %2,5\'i zekat olarak odenir. Bu hesaplama baglayici bir fikih goruesunun yerini tutmaz.',
     'First, all zakatable assets (cash, gold, silver, business assets) are added up and short-term debts are subtracted. If the result is above the Nisab threshold, 2.5% of it is due as Zakat. This calculation is not a substitute for binding religious guidance.',
   ],
   'whats_new_title': ['Neu in dieser Version', 'Bu sürümde yeni', 'New in this version'],
-  'whats_new_zakat_t': ['Zakat-Rechner mit Erklaerungen', 'Aciklamali zekat hesaplayici', 'Zakat calculator with explanations'],
+  'whats_new_zakat_t': ['Zakat-Rechner mit Erklärungen', 'Aciklamali zekat hesaplayici', 'Zakat calculator with explanations'],
   'whats_new_zakat_b': [
-    'Berechne deine jaehrliche Zakat inkl. Nisab-Grenze. Kleine Info-Symbole erklaeren jetzt Nisab, Vermoegenswerte und Schulden.',
+    'Berechne deine jährliche Zakat inkl. Nisab-Grenze. Kleine Info-Symbole erklären jetzt Nisab, Vermögenswerte und Schulden.',
     'Nisap siniri dahil yillik zekatini hesapla. Kucuk bilgi simgeleri artik nisap, varliklar ve borclari aciklar.',
     'Calculate your annual Zakat including the Nisab threshold. Small info icons now explain Nisab, assets and debts.',
   ],
   'whats_new_fasting_t': ['Fastentage im Kalender markieren', 'Oruc gunlerini takvimde isaretle', 'Mark fasting days in the calendar'],
   'whats_new_fasting_b': [
-    'Im Kalender kannst du einen Tag jetzt lange gedrueckt halten, um ihn als Fastentag einzutragen. Der Fasten-Tracker zeigt weiterhin deine Serie und Uebersicht.',
+    'Im Kalender kannst du einen Tag jetzt lange gedrückt halten, um ihn als Fastentag einzutragen. Der Fasten-Tracker zeigt weiterhin deine Serie und Übersicht.',
     'Takvimde bir gune artik basili tutarak onu oruc gunu olarak isaretleyebilirsin. Oruc takibi sayfasi serini ve genel gorunumu gostermeye devam ediyor.',
     'In the calendar you can now long-press a day to mark it as a fasting day. The fasting tracker still shows your streak and overview.',
   ],
   'whats_new_speed_t': ['Schnellere Moscheensuche', 'Daha hizli cami arama', 'Faster mosque search'],
   'whats_new_speed_b': [
-    'Die Umkreissuche nach Moscheen laeuft jetzt ueber mehrere Server gleichzeitig und liefert Ergebnisse spuerbar schneller.',
+    'Die Umkreissuche nach Moscheen läuft jetzt über mehrere Server gleichzeitig und liefert Ergebnisse spürbar schneller.',
     'Yakindaki cami aramasi artik ayni anda birden fazla sunucu uzerinden calisiyor ve sonuclari daha hizli getiriyor.',
     'The nearby mosque search now queries multiple servers at once and delivers results noticeably faster.',
+  ],
+  'whats_new_notif_t': ['Erinnerungen für Gebet und Fasten', 'Namaz ve oruç hatırlatıcıları', 'Prayer and fasting reminders'],
+  'whats_new_notif_b': [
+    'Du kannst jetzt Erinnerungen zu den Gebetszeiten und eine Abend-Erinnerung fürs Fasten aktivieren — zu finden unter Mehr → Benachrichtigungen.',
+    'Artık namaz vakitleri için hatırlatıcılar ve akşamları oruç için bir hatırlatıcı açabilirsin — Diğer → Bildirimler altında.',
+    'You can now enable prayer time reminders and an evening fasting reminder — find them under More → Notifications.',
+  ],
+  'whats_new_start_t': ['Schnellerer Start', 'Daha hızlı açılış', 'Faster startup'],
+  'whats_new_start_b': [
+    'Die App zeigt jetzt sofort eine ungefähre Position an und verfeinert sie im Hintergrund, statt beim Start auf den vollen GPS-Fix zu warten.',
+    'Uygulama artık açılışta tam GPS sonucunu beklemek yerine önce yaklaşık bir konum gösterir ve arka planda hassaslaştırır.',
+    'The app now shows an approximate location immediately and refines it in the background instead of waiting for the full GPS fix at startup.',
+  ],
+  'whats_new_diyanet_t': ['Yatsı-Zeit angepasst', 'Yatsı vakti güncellendi', 'Isha time adjusted'],
+  'whats_new_diyanet_b': [
+    'Für die Diyanet-Methode wird jetzt auch bei Yatsı das übliche Temkin von 4 Minuten berücksichtigt.',
+    'Diyanet yönteminde artık Yatsı için de alışılan 4 dakikalık temkin uygulanıyor.',
+    'For the Diyanet method, the usual 4-minute temkin is now also applied to Isha.',
+  ],
+  'whats_new_search_t': ['Ortssuche zuverlässiger', 'Konum arama daha güvenilir', 'More reliable place search'],
+  'whats_new_search_b': [
+    'Die manuelle Ortssuche nutzt jetzt bei Bedarf eine zweite Kartenquelle, falls die erste nichts findet.',
+    'Manuel konum aramasında, birincisi sonuç vermezse artık ikinci bir kaynak devreye giriyor.',
+    'Manual place search now falls back to a second map source if the first one finds nothing.',
   ],
   'fasting_marked_done': ['Als Fastentag markiert', 'Oruc gunu olarak isaretlendi', 'Marked as fasting day'],
   'fasting_marked_undone': ['Fastentag entfernt', 'Oruc gunu kaldirildi', 'Fasting day removed'],
   'fasting_calendar_hint': [
-    'Tipp: Lange auf einen Tag druecken, um ihn als Fastentag zu markieren.',
+    'Tipp: Lange auf einen Tag drücken, um ihn als Fastentag zu markieren.',
     'Ipucu: Bir gunu oruc gunu olarak isaretlemek icin basili tut.',
     'Tip: Long-press a day to mark it as a fasting day.',
   ],
@@ -745,7 +781,7 @@ const Map<String, List<String>> _strings = {
   'notif_fast_yes': ['Ja, gefastet', 'Evet, tuttum', 'Yes, fasted'],
   'notif_fast_no': ['Nein', 'Hayır', 'No'],
   'notif_permission_hint': [
-    'Auf manchen Geraeten musst du exakte Alarme zusaetzlich in den System-Einstellungen erlauben, damit die Erinnerung puenktlich kommt.',
+    'Auf manchen Geräten musst du exakte Alarme zusätzlich in den System-Einstellungen erlauben, damit die Erinnerung pünktlich kommt.',
     'Bazı cihazlarda, hatırlatmanın zamanında gelmesi için tam zamanlı alarmlara sistem ayarlarından ayrıca izin vermen gerekir.',
     'On some devices you must additionally allow exact alarms in the system settings so the reminder arrives on time.',
   ],
@@ -993,6 +1029,7 @@ class PrayerCalculator {
   static const int temkinDhuhr = 5;
   static const int temkinAsr = 4;
   static const int temkinMaghrib = 7;
+  static const int temkinIsha = 4; // Diyanet: Yatsi ebenfalls mit Temkin
 
   static double julianDay(int year, int month, int day) {
     if (month <= 2) {
@@ -1101,7 +1138,7 @@ class PrayerCalculator {
       map[P.isha] = map[P.maghrib]!
           .add(Duration(minutes: ishaIntervalMin + (offsets[P.isha] ?? 0)));
     } else {
-      put(P.isha, toLocal(tIsha, P.isha, 0));
+      put(P.isha, toLocal(tIsha, P.isha, temkinIsha));
     }
 
     return DayTimes(date: day, times: map, source: TimeSource.calculated);
@@ -1899,10 +1936,18 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      // Schneller Naeherungswert, damit die Oberflaeche nicht auf den
+      // vollen GPS-Fix warten muss (kann drinnen mehrere Sekunden dauern).
+      try {
+        final last = await Geolocator.getLastKnownPosition();
+        if (last != null && lat == null) {
+          await _storeLocation(last.latitude, last.longitude, null, manual: false);
+        }
+      } catch (_) {}
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 25),
+          timeLimit: Duration(seconds: 20),
         ),
       );
       await _storeLocation(pos.latitude, pos.longitude, null, manual: false);
@@ -1937,6 +1982,18 @@ class AppState extends ChangeNotifier {
   }
 
   Future<List<(String, double, double)>> searchPlace(String query) async {
+    try {
+      final r = await _searchNominatim(query);
+      if (r.isNotEmpty) return r;
+    } catch (_) {}
+    try {
+      return await _searchPhoton(query);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<(String, double, double)>> _searchNominatim(String query) async {
     final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
       'q': query,
       'format': 'json',
@@ -1944,8 +2001,8 @@ class AppState extends ChangeNotifier {
       'accept-language': lang.name,
     });
     final res = await http.get(uri, headers: {
-      'User-Agent': 'NurIslamApp/3.0 (persönliche Nutzung)',
-    }).timeout(const Duration(seconds: 20));
+      'User-Agent': 'NurIslamApp/3.0 (private use)',
+    }).timeout(const Duration(seconds: 12));
     if (res.statusCode != 200) return [];
     return (jsonDecode(res.body) as List)
         .map((e) => (
@@ -1954,6 +2011,35 @@ class AppState extends ChangeNotifier {
               double.parse(e['lon'] as String),
             ))
         .toList();
+  }
+
+  /// Zweite Quelle ohne API-Schluessel, falls Nominatim nichts findet oder
+  /// gerade ueberlastet/blockiert ist.
+  Future<List<(String, double, double)>> _searchPhoton(String query) async {
+    final uri = Uri.https('photon.komoot.io', '/api/', {
+      'q': query,
+      'limit': '8',
+      'lang': lang == AppLang.tr ? 'en' : lang.name,
+    });
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+    if (res.statusCode != 200) return [];
+    final features =
+        (jsonDecode(res.body) as Map<String, dynamic>)['features'] as List;
+    return features.map((f) {
+      final e = f as Map<String, dynamic>;
+      final p = e['properties'] as Map<String, dynamic>;
+      final coords = (e['geometry'] as Map<String, dynamic>)['coordinates'] as List;
+      final name = [p['name'], p['city'], p['state'], p['country']]
+          .whereType<String>()
+          .where((s) => s.isNotEmpty)
+          .toSet()
+          .join(', ');
+      return (
+        name.isEmpty ? query : name,
+        (coords[1] as num).toDouble(),
+        (coords[0] as num).toDouble(),
+      );
+    }).toList();
   }
 
   // --- Moscheen ---
@@ -2483,6 +2569,13 @@ class LocationNotice extends StatelessWidget {
           const CircularProgressIndicator(),
           const SizedBox(height: 16),
           Text(tr('location_loading')),
+          const SizedBox(height: 18),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const LocationPickerPage())),
+            icon: const Icon(Icons.travel_explore, size: 18),
+            label: Text(tr('choose_manually')),
+          ),
         ]),
       );
     }
@@ -4192,7 +4285,7 @@ class MoreTab extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Center(
-          child: Text('Nur Islam · 4.0.0',
+          child: Text('Nur Islam · 4.1.0',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ),
       ],
@@ -6345,12 +6438,13 @@ class _RankRow extends StatelessWidget {
   }
 }
 
-const String kAppVersion = '1.1.6';
+const String kAppVersion = '1.2.0';
 
 const List<(IconData, String, String)> kWhatsNewItems = [
-  (Icons.calculate_outlined, 'whats_new_zakat_t', 'whats_new_zakat_b'),
-  (Icons.nightlight_round, 'whats_new_fasting_t', 'whats_new_fasting_b'),
-  (Icons.speed, 'whats_new_speed_t', 'whats_new_speed_b'),
+  (Icons.notifications_active_outlined, 'whats_new_notif_t', 'whats_new_notif_b'),
+  (Icons.speed, 'whats_new_start_t', 'whats_new_start_b'),
+  (Icons.schedule, 'whats_new_diyanet_t', 'whats_new_diyanet_b'),
+  (Icons.travel_explore, 'whats_new_search_t', 'whats_new_search_b'),
 ];
 
 class WhatsNewDialog extends StatelessWidget {
@@ -6501,6 +6595,7 @@ class _OnboardingDialogState extends State<OnboardingDialog> {
   int _page = 0;
 
   static const _pages = [
+    ('tut0_t', 'tut0_b', Icons.wb_twilight),
     ('tut1_t', 'tut1_b', Icons.nightlight_round),
     ('tut2_t', 'tut2_b', Icons.swipe),
     ('tut3_t', 'tut3_b', Icons.mosque_outlined),
