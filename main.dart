@@ -1989,11 +1989,11 @@ class RootShell extends StatefulWidget {
 }
 
 class _RootShellState extends State<RootShell> {
-  int _index = 0;
+  int _index = 0;  static const MethodChannel _routeChannel = MethodChannel('com.nurislam.nur_islam/route');
 
   @override
   void initState() {
-    super.initState();
+    super.initState(); _routeChannel.setMethodCallHandler((call) async { if (call.method == 'openRoute' && call.arguments == 'qibla') { if (mounted) setState(() => _index = 2); } }); _routeChannel.invokeMethod<String>('getInitialRoute').then((route) { if (route == 'qibla' && mounted) setState(() => _index = 2); }).catchError((_) {});
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (appState.locState != LocState.ready && !appState.manualLocation) {
         appState.refreshLocation();
