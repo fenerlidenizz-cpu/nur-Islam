@@ -3,7 +3,7 @@ description: >-
   Nur Islam — Gebetszeiten nach Diyanet-Methode, Qibla-Finder und Tesbih.
   Dauerhaft kostenlos, werbefrei, ohne Tracking, offlinefähig (DE/TR/EN).
 publish_to: "none"
-version: 1.1.8+3
+version: 1.1.8+4
 environment:
   sdk: ">=3.6.0 <4.0.0"
   flutter: ">=3.27.0"
