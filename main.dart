@@ -214,7 +214,7 @@ const Map<String, List<String>> _strings = {
   ],
   'radius': ['Umkreis', 'Yarıçap', 'Radius'],
   'search_again': ['Neu suchen', 'Yeniden ara', 'Search again'],
-  'set_reference': ['Als meine Moschee', 'Camim olarak seç', 'Set as my mosque'],
+  'set_reference': ['Als meine Moschee markieren', 'Camim olarak seç', 'Set as my mosque'],
   'my_mosque': ['Meine Moschee', 'Camim', 'My mosque'],
 
   'time_source': ['Zeitquelle', 'Vakit kaynağı', 'Time source'],
@@ -1636,7 +1636,42 @@ class AppState extends ChangeNotifier {
     return !_nonSunniNames.any(n.contains);
   }
 
-  Future<void> loadMosques() async {
+    /// Fragt mehrere Overpass-Spiegelserver parallel an und verwendet die
+  /// schnellste erfolgreiche Antwort, damit die Moscheensuche nicht durch
+  /// einen einzelnen langsamen/ueberlasteten Server ausgebremst wird.
+  Future<http.Response> _queryOverpassFastest(String query) {
+    const endpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://overpass.openstreetmap.ru/api/interpreter',
+    ];
+    final completer = Completer<http.Response>();
+    var pending = endpoints.length;
+    Object? lastError;
+    for (final ep in endpoints) {
+      http
+          .post(Uri.parse(ep),
+              headers: {'User-Agent': 'NurIslamApp/3.0'}, body: {'data': query})
+          .timeout(const Duration(seconds: 20))
+          .then((res) {
+        pending--;
+        if (completer.isCompleted) return;
+        if (res.statusCode == 200) {
+          completer.complete(res);
+        } else {
+          lastError = Exception('HTTP ${res.statusCode}');
+          if (pending == 0) completer.completeError(lastError!);
+        }
+      }).catchError((e) {
+        pending--;
+        lastError = e;
+        if (pending == 0 && !completer.isCompleted) completer.completeError(e);
+      });
+    }
+    return completer.future;
+  }
+
+Future<void> loadMosques() async {
     if (lat == null || lng == null || mosquesLoading) return;
     mosquesLoading = true;
     mosqueError = null;
@@ -1651,13 +1686,7 @@ class AppState extends ChangeNotifier {
 );
 out center 100;
 ''';
-      final res = await http
-          .post(
-            Uri.parse('https://overpass-api.de/api/interpreter'),
-            headers: {'User-Agent': 'NurIslamApp/3.0'},
-            body: {'data': query},
-          )
-          .timeout(const Duration(seconds: 40));
+      final res = await _queryOverpassFastest(query);
       if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
 
       final elements = (jsonDecode(res.body) as Map<String, dynamic>)['elements'] as List;
