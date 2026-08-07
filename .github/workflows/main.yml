@@ -404,9 +404,12 @@ jobs:
                                   views.setTextColor(nameIds[i], if (isNext) gold else Color.parseColor("#B3FFFFFF"))
                               } else {
                                   views.setTextViewText(nameIds[i], "")
-                                  views.setTextViewText(timeIds[i], "")
+                                  views.setTextViewText(timeIds[i], "--:--")
                               }
                           }
+                      if (times.length() == 0) {
+                          views.setTextViewText(R.id.times_header, "Bitte Moschee oder Standort waehlen")
+                      }
                       } catch (e: Exception) {
                           views.setTextViewText(R.id.times_header, "Nur Islam")
                       }
