@@ -1143,7 +1143,10 @@ class AppState extends ChangeNotifier {
 
   void setLang(AppLang v) => _setInt('lang', v.index, () => lang = v);
   void setTheme(ThemeMode v) => _setInt('theme', v.index, () => themeMode = v);
-  void setPalette(AppPalette v) => _setInt('palette', v.index, () => palette = v);
+  void setPalette(AppPalette v) {
+    _setInt('palette', v.index, () => palette = v);
+    unawaited(writeWidgetData());
+  }
   void setTimeSource(TimeSource v) => _setInt('timeSource', v.index, () => timeSource = v);
   void setAsrFactor(int v) {
     _markCustom();
@@ -1258,6 +1261,9 @@ class AppState extends ChangeNotifier {
       if (lat != null && lng != null) {
         await _p.setString('widget_qibla', Qibla.bearing(lat!, lng!).toStringAsFixed(1));
       }
+      try {
+        await const MethodChannel('com.nurislam.nur_islam/route').invokeMethod('refreshWidgets');
+      } catch (_) {}
     } catch (_) {
       // Widgets sind Beiwerk — ein Fehler hier darf die App nicht stören.
     }
@@ -1993,7 +1999,7 @@ class _RootShellState extends State<RootShell> {
 
   @override
   void initState() {
-    super.initState(); _routeChannel.setMethodCallHandler((call) async { if (call.method == 'openRoute' && call.arguments == 'qibla') { if (mounted) setState(() => _index = 2); } }); _routeChannel.invokeMethod<String>('getInitialRoute').then((route) { if (route == 'qibla' && mounted) setState(() => _index = 2); }).catchError((_) {});
+    super.initState(); _routeChannel.setMethodCallHandler((call) async { if (call.method == 'openRoute') { if (call.arguments == 'qibla') { if (mounted) setState(() => _index = 2); } else if (call.arguments == 'times') { if (mounted) setState(() => _index = 0); } } }); _routeChannel.invokeMethod<String>('getInitialRoute').then((route) { if (route == 'qibla' && mounted) { setState(() => _index = 2); } else if (route == 'times' && mounted) { setState(() => _index = 0); } }).catchError((_) {});
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (appState.locState != LocState.ready && !appState.manualLocation) {
         appState.refreshLocation();
