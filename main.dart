@@ -312,16 +312,18 @@ const Map<String, List<String>> _strings = {
   // Feineinstellung der Winkel
   'angles': ['Dämmerungswinkel', 'Şafak açıları', 'Twilight angles'],
   'angles_hint': [
-    'Die Diyanet-Einstellung nutzt 14,9° und 13,9° — das entspricht den veröffentlichten '
-        'Zeiten für Mitteleuropa. Die klassischen 18°/17° ergeben in nördlichen Breiten '
-        'deutlich frühere İmsak- und spätere Yatsı-Zeiten. Weicht deine Moschee ab, '
-        'kalibriere unten.',
-    'Diyanet ayarı 14,9° ve 13,9° kullanır — Orta Avrupa için yayımlanan vakitlere uyar. '
-        'Klasik 18°/17° kuzey enlemlerde çok daha erken İmsak ve geç Yatsı verir. '
-        'Camin farklıysa aşağıdan kalibre et.',
-    'The Diyanet setting uses 14.9° and 13.9°, matching the published times for central '
-        'Europe. The classic 18°/17° gives much earlier Fajr and later Isha at northern '
-        'latitudes. If your mosque differs, calibrate below.',
+    'Die Diyanet-Einstellung nutzt 18,0° und 15,3° — kalibriert anhand offiziell '
+        'veröffentlichter Zeiten für Deutschland. An sehr kurzen Sommernächten wechselt '
+        'die App automatisch auf eine Näherungsformel für hohe Breitengrade. Weicht '
+        'deine Moschee ab, kalibriere unten.',
+    'Diyanet ayarı 18,0° ve 15,3° kullanır — Almanya için resmi olarak yayımlanan '
+        'vakitlere göre kalibre edildi. Çok kısa yaz gecelerinde uygulama otomatik '
+        'olarak yüksek enlemler için bir yaklaşık formüle geçer. Camin farklıysa '
+        'aşağıdan kalibre et.',
+    'The Diyanet setting uses 18.0° and 15.3°, calibrated against officially published '
+        'times for Germany. On very short summer nights the app automatically switches '
+        'to an approximation formula for high latitudes. If your mosque differs, '
+        'calibrate below.',
   ],
   'fajr_angle': ['İmsak-Winkel', 'İmsak açısı', 'Fajr angle'],
   'isha_angle': ['Yatsı-Winkel', 'Yatsı açısı', 'Isha angle'],
@@ -336,12 +338,9 @@ const Map<String, List<String>> _strings = {
   'calibrate_failed': ['Zeit passt nicht zu diesem Standort.', 'Bu konuma uymuyor.', 'That time does not fit this location.'],
   'temkin': ['Temkin nach Diyanet', 'Diyanet temkini', 'Diyanet temkin'],
   'temkin_hint': [
-    'Öğle +5, İkindi +4, Sonnenaufgang −5, Akşam +7 Minuten. Die Diyanet-Methode ergänzt '
-        'Sonnenaufgang −1 und Akşam +1 über die Feinjustierung.',
-    'Öğle +5, İkindi +4, Güneş −5, Akşam +7 dakika. Diyanet yöntemi ince ayarda ayrıca '
-        'Güneş −1 ve Akşam +1 ekler.',
-    'Dhuhr +5, Asr +4, sunrise −5, Maghrib +7 minutes. The Diyanet method adds sunrise −1 '
-        'and Maghrib +1 through the fine tuning.',
+    'Öğle +5, İkindi +4, Sonnenaufgang −7, Akşam +7 Minuten (Diyanet-Temkin).',
+    'Öğle +5, İkindi +4, Güneş −7, Akşam +7 dakika (Diyanet temkini).',
+    'Dhuhr +5, Asr +4, sunrise −7, Maghrib +7 minutes (Diyanet temkin).',
   ],
   'asr_method': ['İkindi-Methode', 'İkindi yöntemi', 'Asr method'],
   'asr_first': ['Einfaches Schattenmaß (Diyanet)', 'Asr-ı evvel (Diyanet)', 'Single shadow (Diyanet)'],
@@ -901,8 +900,8 @@ class CalcMethod {
 
 const List<CalcMethod> kMethods = [
   // Auf die veroeffentlichten Diyanet-Zeiten fuer Mitteleuropa abgeglichen.
-  CalcMethod('diyanet', 'Diyanet İşleri Başkanlığı', 14.9, 13.9,
-      asr: 1, temkin: true, offsetSunrise: -1, offsetMaghrib: 1),
+  CalcMethod('diyanet', 'Diyanet İşleri Başkanlığı', 18.0, 15.3,
+      asr: 1, temkin: true),
   CalcMethod('mwl', 'Muslim World League', 18, 17),
   CalcMethod('isna', 'ISNA (Nordamerika)', 15, 15),
   CalcMethod('egypt', 'Ägyptische Vermessungsbehörde', 19.5, 17.5),
@@ -1025,7 +1024,7 @@ class PrayerCalculator {
   static const double sunriseAngle = 0.833;
 
   // Temkin nach Diyanet (Minuten)
-  static const int temkinSunrise = -5;
+  static const int temkinSunrise = -7;
   static const int temkinDhuhr = 5;
   static const int temkinAsr = 4;
   static const int temkinMaghrib = 7;
@@ -1103,6 +1102,7 @@ class PrayerCalculator {
 
     var tFajr = 5 / 24, tSunrise = 6 / 24, tDhuhr = 12 / 24;
     var tAsr = 13 / 24, tMaghrib = 18 / 24, tIsha = 18 / 24;
+    var fajrInvalid = false, ishaInvalid = false;
 
     for (var i = 0; i < 3; i++) {
       tFajr = _sunAngleTime(jd, tFajr, fajrAngle, lat, beforeNoon: true) / 24;
@@ -1111,8 +1111,22 @@ class PrayerCalculator {
       tAsr = _asrTime(jd, tAsr, shadowFactor, lat) / 24;
       tMaghrib = _sunAngleTime(jd, tMaghrib, sunriseAngle, lat) / 24;
       tIsha = _sunAngleTime(jd, tIsha, ishaAngle, lat) / 24;
-      if (tFajr.isNaN) tFajr = 4 / 24;
-      if (tIsha.isNaN) tIsha = 22 / 24;
+      if (tFajr.isNaN) { tFajr = 4 / 24; fajrInvalid = true; }
+      if (tIsha.isNaN) { tIsha = 22 / 24; ishaInvalid = true; }
+    }
+
+    // Hohe Breitengrade (z. B. Deutschland im Hochsommer): der Sonnenwinkel fuer
+    // Imsak/Yatsi wird manchmal gar nicht erreicht. Verhaeltnis anhand der
+    // offiziellen Diyanet-Zeiten fuer Koeln kalibriert (naechtlicher Anteil).
+    final night = (1 + tSunrise) - tMaghrib;
+    const hlFajrRatio = 0.213, hlIshaRatio = 0.185;
+    final fajrPortion = hlFajrRatio * night;
+    final ishaPortion = hlIshaRatio * night;
+    if (fajrInvalid || (tSunrise - tFajr) > fajrPortion) {
+      tFajr = tSunrise - fajrPortion;
+    }
+    if (ishaInvalid || (tIsha - tMaghrib) > ishaPortion) {
+      tIsha = tMaghrib + ishaPortion;
     }
 
     DateTime? toLocal(double tDays, P key, int temkin) {
@@ -1233,8 +1247,8 @@ class AppState extends ChangeNotifier {
   String methodId = 'diyanet';
   int ishaIntervalMin = 0;
   int asrShadowFactor = 1; // Diyanet: einfaches Schattenmaß
-  double fajrAngle = 14.9;
-  double ishaAngle = 13.9;
+  double fajrAngle = 18.0;
+  double ishaAngle = 15.3;
   bool useTemkin = true;
 
   double? lat, lng;
@@ -1298,8 +1312,8 @@ class AppState extends ChangeNotifier {
     methodId = _p.getString('methodId') ?? 'diyanet';
     ishaIntervalMin = _p.getInt('ishaInterval') ?? 0;
     asrShadowFactor = _p.getInt('asrFactor') ?? 1;
-    fajrAngle = _p.getDouble('fajrAngle') ?? 14.9;
-    ishaAngle = _p.getDouble('ishaAngle') ?? 13.9;
+    fajrAngle = _p.getDouble('fajrAngle') ?? 18.0;
+    ishaAngle = _p.getDouble('ishaAngle') ?? 15.3;
     useTemkin = _p.getBool('useTemkin') ?? true;
     lat = _p.getDouble('lat');
     lng = _p.getDouble('lng');
@@ -4808,7 +4822,7 @@ class _AnglesPageState extends State<AnglesPage> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => appState.applyMethod('diyanet'),
-                  child: const Text('Diyanet: 14,9° / 13,9°'),
+                  child: const Text('Diyanet: 18,0° / 15,3°'),
                 ),
               ),
               const SizedBox(width: 10),
