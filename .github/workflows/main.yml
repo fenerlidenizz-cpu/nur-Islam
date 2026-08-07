@@ -72,7 +72,7 @@ jobs:
           GRADLE=android/app/build.gradle.kts
           if [ -f "$GRADLE" ] && ! grep -q "coreLibraryDesugaring" "$GRADLE"; then
             sed -i 's/sourceCompatibility = JavaVersion.VERSION_11/sourceCompatibility = JavaVersion.VERSION_11\n        isCoreLibraryDesugaringEnabled = true/' "$GRADLE"
-            { echo 'dependencies {'; echo '    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'; echo '}'; } >> "$GRADLE"
+            { echo 'android { compileOptions { isCoreLibraryDesugaringEnabled = true } }'; echo 'dependencies { coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4") }'; } >> "$GRADLE"
           fi
 
       # Darf fehlschlagen — dann bleibt einfach das Standard-Symbol.
