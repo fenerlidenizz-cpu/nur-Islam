@@ -743,6 +743,12 @@ const Map<String, List<String>> _strings = {
     'Manuel konum aramasında, birincisi sonuç vermezse artık ikinci bir kaynak devreye giriyor.',
     'Manual place search now falls back to a second map source if the first one finds nothing.',
   ],
+  'whats_new_calib_t': ['Genauere Gebetszeiten', 'Daha hassas namaz vakitleri', 'More accurate prayer times'],
+  'whats_new_calib_b': [
+    'Die Diyanet-Berechnung wurde anhand offiziell veröffentlichter Zeiten für Deutschland neu kalibriert — inklusive einer Korrektur für sehr kurze Sommernächte im Norden.',
+    'Diyanet hesaplaması, Almanya için resmi olarak yayımlanan vakitlere göre yeniden kalibre edildi — kuzeydeki çok kısa yaz geceleri için bir düzeltme de dahil.',
+    'The Diyanet calculation has been recalibrated against officially published times for Germany, including a fix for very short summer nights in the north.',
+  ],
   'fasting_marked_done': ['Als Fastentag markiert', 'Oruc gunu olarak isaretlendi', 'Marked as fasting day'],
   'fasting_marked_undone': ['Fastentag entfernt', 'Oruc gunu kaldirildi', 'Fasting day removed'],
   'fasting_calendar_hint': [
@@ -4299,7 +4305,7 @@ class MoreTab extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Center(
-          child: Text('Nur Islam · 4.1.0',
+          child: Text('Nur Islam · 4.2.0',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
         ),
       ],
@@ -6452,13 +6458,10 @@ class _RankRow extends StatelessWidget {
   }
 }
 
-const String kAppVersion = '1.2.0';
+const String kAppVersion = '1.2.1';
 
 const List<(IconData, String, String)> kWhatsNewItems = [
-  (Icons.notifications_active_outlined, 'whats_new_notif_t', 'whats_new_notif_b'),
-  (Icons.speed, 'whats_new_start_t', 'whats_new_start_b'),
-  (Icons.schedule, 'whats_new_diyanet_t', 'whats_new_diyanet_b'),
-  (Icons.travel_explore, 'whats_new_search_t', 'whats_new_search_b'),
+  (Icons.schedule, 'whats_new_calib_t', 'whats_new_calib_b'),
 ];
 
 class WhatsNewDialog extends StatelessWidget {
