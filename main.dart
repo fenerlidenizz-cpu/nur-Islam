@@ -21,6 +21,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tzdata;
 
 /// Link, den Freunde zum Installieren bekommen. Sobald die App im Play Store
 /// ist, hier die Store-Adresse eintragen.
@@ -28,9 +31,64 @@ const String kAppShareUrl = 'https://github.com/';
 
 final AppState appState = AppState();
 
+final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
+
+/// Muss eine Top-Level- bzw. static Funktion sein: wird ggf. in einem
+/// separaten Isolate ausgefuehrt, wenn die App beim Antippen der
+/// Fasten-Erinnerung nicht mehr laeuft.
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) async {
+  if (response.actionId != 'fast_yes' && response.actionId != 'fast_no') return;
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString('fastedDays');
+  final map = raw != null
+      ? Map<String, dynamic>.from(jsonDecode(raw) as Map)
+      : <String, dynamic>{};
+  final now = DateTime.now();
+  final key = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  map[key] = response.actionId == 'fast_yes';
+  await prefs.setString('fastedDays', jsonEncode(map));
+}
+
+Future<void> initNotifications() async {
+  tzdata.initializeTimeZones();
+  final offsetHours = (DateTime.now().timeZoneOffset.inMinutes / 60).round();
+  try {
+    final name = offsetHours == 0 ? 'UTC' : 'Etc/GMT${offsetHours > 0 ? '-' : '+'}${offsetHours.abs()}';
+    tz.setLocalLocation(tz.getLocation(name));
+  } catch (_) {
+    tz.setLocalLocation(tz.UTC);
+  }
+  const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const initSettings = InitializationSettings(android: androidInit);
+  try {
+    await flnp.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (resp) async {
+        if (resp.actionId == 'fast_yes' || resp.actionId == 'fast_no') {
+          appState.setFastedToday(resp.actionId == 'fast_yes');
+        }
+      },
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
+    );
+  } catch (_) {
+    // Benachrichtigungen sind Beiwerk -- ein Fehler hier darf die App nicht stoeren.
+  }
+}
+
+Future<void> requestNotificationPermissions() async {
+  try {
+    final androidImpl = flnp.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await androidImpl?.requestNotificationsPermission();
+    await androidImpl?.requestExactAlarmsPermission();
+  } catch (_) {}
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await appState.init();
+  await initNotifications();
   runApp(const NurIslamApp());
 }
 
@@ -657,6 +715,40 @@ const Map<String, List<String>> _strings = {
     'Ipucu: Bir gunu oruc gunu olarak isaretlemek icin basili tut.',
     'Tip: Long-press a day to mark it as a fasting day.',
   ],
+  'notifications_sub': [
+    'Erinnerungen zu Gebetszeiten und zum Fasten-Eintrag einrichten.',
+    'Namaz vakitleri ve oruç kaydı için hatırlatıcıları ayarla.',
+    'Set up reminders for prayer times and fasting entries.',
+  ],
+  'notif_settings_title': ['Benachrichtigungen', 'Bildirimler', 'Notifications'],
+  'notif_prayer_toggle': ['Gebetszeit-Erinnerungen', 'Namaz vakti hatırlatıcıları', 'Prayer time reminders'],
+  'notif_prayer_toggle_sub': [
+    'Erhalte zur jeweiligen Gebetszeit eine Benachrichtigung.',
+    'Her namaz vaktinde bir bildirim al.',
+    'Get a notification at each prayer time.',
+  ],
+  'notif_prayer_title': ['Gebetszeit', 'Namaz vakti', 'Prayer time'],
+  'notif_prayer_body_suffix': ['ist jetzt', 'şimdi', 'is now'],
+  'notif_fasting_toggle': ['Fasten-Erinnerung', 'Oruç hatırlatıcısı', 'Fasting reminder'],
+  'notif_fasting_toggle_sub': [
+    'Werde abends gefragt, ob du an dem Tag gefastet hast.',
+    'Akşam o gün oruç tutup tutmadığın sorulsun.',
+    'Get asked in the evening whether you fasted that day.',
+  ],
+  'notif_fasting_time': ['Uhrzeit der Erinnerung', 'Hatırlatma saati', 'Reminder time'],
+  'notif_fasting_title': ['Fasten-Eintrag', 'Oruç kaydı', 'Fasting entry'],
+  'notif_fasting_body': [
+    'Hast du heute gefastet? Tippe auf Ja oder Nein, um es einzutragen.',
+    'Bugün oruç tuttun mu? Kaydetmek için Evet veya Hayır\'a dokun.',
+    'Did you fast today? Tap Yes or No to record it.',
+  ],
+  'notif_fast_yes': ['Ja, gefastet', 'Evet, tuttum', 'Yes, fasted'],
+  'notif_fast_no': ['Nein', 'Hayır', 'No'],
+  'notif_permission_hint': [
+    'Auf manchen Geraeten musst du exakte Alarme zusaetzlich in den System-Einstellungen erlauben, damit die Erinnerung puenktlich kommt.',
+    'Bazı cihazlarda, hatırlatmanın zamanında gelmesi için tam zamanlı alarmlara sistem ayarlarından ayrıca izin vermen gerekir.',
+    'On some devices you must additionally allow exact alarms in the system settings so the reminder arrives on time.',
+  ],
 };
 
 String tr(String key) {
@@ -1137,6 +1229,10 @@ class AppState extends ChangeNotifier {
   // Kerahat
   bool tutorialDone = false;
   String lastSeenVersion = '';
+  bool notifPrayerEnabled = false;
+  bool notifFastingEnabled = false;
+  int notifFastingHour = 20;
+  int notifFastingMinute = 0;
   int widgetAlpha = 170; // 0 = unsichtbar, 255 = deckend
   bool showKerahat = false;
   int kerahatSunriseMin = 45;
@@ -1190,6 +1286,10 @@ class AppState extends ChangeNotifier {
     userName = _p.getString('userName') ?? '';
     tutorialDone = _p.getBool('tutorialDone') ?? false;
     lastSeenVersion = _p.getString('lastSeenVersion') ?? '';
+    notifPrayerEnabled = _p.getBool('notifPrayerEnabled') ?? false;
+    notifFastingEnabled = _p.getBool('notifFastingEnabled') ?? false;
+    notifFastingHour = _p.getInt('notifFastingHour') ?? 20;
+    notifFastingMinute = _p.getInt('notifFastingMinute') ?? 0;
     widgetAlpha = _p.getInt('widget_alpha') ?? 170;
     showKerahat = _p.getBool('showKerahat') ?? false;
     kerahatSunriseMin = _p.getInt('kSunrise') ?? 45;
@@ -1378,6 +1478,112 @@ class AppState extends ChangeNotifier {
     lastSeenVersion = v;
     _p.setString('lastSeenVersion', v);
     notifyListeners();
+  }
+  void setFastedToday(bool value) {
+    final key = dayKey(DateTime.now());
+    fastedDays[key] = value;
+    _p.setString('fastedDays', jsonEncode(fastedDays));
+    notifyListeners();
+  }
+
+  Future<void> setNotifPrayerEnabled(bool v) async {
+    notifPrayerEnabled = v;
+    await _p.setBool('notifPrayerEnabled', v);
+    if (v) await requestNotificationPermissions();
+    notifyListeners();
+    await scheduleAllNotifications();
+  }
+
+  Future<void> setNotifFastingEnabled(bool v) async {
+    notifFastingEnabled = v;
+    await _p.setBool('notifFastingEnabled', v);
+    if (v) await requestNotificationPermissions();
+    notifyListeners();
+    await scheduleAllNotifications();
+  }
+
+  Future<void> setNotifFastingTime(int hour, int minute) async {
+    notifFastingHour = hour;
+    notifFastingMinute = minute;
+    await _p.setInt('notifFastingHour', hour);
+    await _p.setInt('notifFastingMinute', minute);
+    notifyListeners();
+    await scheduleAllNotifications();
+  }
+
+  /// Plant Erinnerungen fuer die naechsten Tage neu. Wird beim App-Start und
+  /// bei jeder Einstellungsaenderung aufgerufen. Alte Termine werden zuerst
+  /// verworfen, damit sich nichts doppelt oder veraltet ansammelt.
+  Future<void> scheduleAllNotifications() async {
+    try {
+      await flnp.cancelAll();
+    } catch (_) {
+      return;
+    }
+    if (!notifPrayerEnabled && !notifFastingEnabled) return;
+    var id = 0;
+    final now = DateTime.now();
+
+    if (notifPrayerEnabled) {
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'prayer_times',
+          'Gebetszeiten',
+          channelDescription: 'Erinnerungen zu den Gebetszeiten',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      );
+      for (var dayOffset = 0; dayOffset < 3; dayOffset++) {
+        final day = now.add(Duration(days: dayOffset));
+        final times = timesFor(day)?.times;
+        if (times == null) continue;
+        for (final p in kPrayers) {
+          final t = times[p];
+          if (t == null || t.isBefore(now)) continue;
+          try {
+            await flnp.zonedSchedule(
+              id++,
+              tr('notif_prayer_title'),
+              '${p.label} – ${tr('notif_prayer_body_suffix')}',
+              tz.TZDateTime.from(t, tz.local),
+              details,
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            );
+          } catch (_) {}
+        }
+      }
+    }
+
+    if (notifFastingEnabled) {
+      for (var dayOffset = 0; dayOffset < 3; dayOffset++) {
+        final day = now.add(Duration(days: dayOffset));
+        final reminder = DateTime(day.year, day.month, day.day, notifFastingHour, notifFastingMinute);
+        if (reminder.isBefore(now)) continue;
+        try {
+          await flnp.zonedSchedule(
+            id++,
+            tr('notif_fasting_title'),
+            tr('notif_fasting_body'),
+            tz.TZDateTime.from(reminder, tz.local),
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                'fasting_checkin',
+                'Fasten-Erinnerung',
+                channelDescription: 'Erinnerung, den Fastentag einzutragen',
+                importance: Importance.high,
+                priority: Priority.high,
+                actions: [
+                  AndroidNotificationAction('fast_yes', tr('notif_fast_yes')),
+                  AndroidNotificationAction('fast_no', tr('notif_fast_no')),
+                ],
+              ),
+            ),
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          );
+        } catch (_) {}
+      }
+    }
   }
 
   void setShowKerahat(bool v) {
@@ -2182,6 +2388,7 @@ class _RootShellState extends State<RootShell> {
           builder: (_) => WhatsNewDialog(version: kAppVersion, items: kWhatsNewItems),
         ).then((_) => appState.markVersionSeen(kAppVersion));
       }
+      appState.scheduleAllNotifications();
     });
   }
 
@@ -4202,15 +4409,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ]),
 
-              // --- Benachrichtigungen (noch gesperrt) ---
+              // --- Benachrichtigungen ---
               Card(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                 child: ListTile(
-                  enabled: false,
                   leading: Icon(Icons.notifications_none, color: pal.gold),
                   title: Text(tr('notifications')),
-                  subtitle: Text('${tr('coming_soon')} · ${tr('notifications_locked')}'),
-                  trailing: Icon(Icons.lock, size: 18, color: pal.gold),
+                  subtitle: Text(tr('notifications_sub')),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationSettingsPage()),
+                  ),
                 ),
               ),
 
@@ -6205,6 +6415,76 @@ class WhatsNewDialog extends StatelessWidget {
 
 // =============================================================================
 // 21b. Was ist neu (Update-Hinweis)
+// =============================================================================
+class NotificationSettingsPage extends StatefulWidget {
+  const NotificationSettingsPage({super.key});
+  @override
+  State<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
+}
+
+class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
+  Future<void> _pickFastingTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: appState.notifFastingHour, minute: appState.notifFastingMinute),
+    );
+    if (picked != null) {
+      await appState.setNotifFastingTime(picked.hour, picked.minute);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final fastingTime =
+            '${appState.notifFastingHour.toString().padLeft(2, '0')}:${appState.notifFastingMinute.toString().padLeft(2, '0')}';
+        return Scaffold(
+          appBar: AppBar(title: Text(tr('notif_settings_title'))),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Card(
+                child: SwitchListTile(
+                  value: appState.notifPrayerEnabled,
+                  onChanged: (v) => appState.setNotifPrayerEnabled(v),
+                  title: Text(tr('notif_prayer_toggle')),
+                  subtitle: Text(tr('notif_prayer_toggle_sub')),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Column(children: [
+                  SwitchListTile(
+                    value: appState.notifFastingEnabled,
+                    onChanged: (v) => appState.setNotifFastingEnabled(v),
+                    title: Text(tr('notif_fasting_toggle')),
+                    subtitle: Text(tr('notif_fasting_toggle_sub')),
+                  ),
+                  if (appState.notifFastingEnabled)
+                    ListTile(
+                      leading: const Icon(Icons.schedule),
+                      title: Text(tr('notif_fasting_time')),
+                      trailing: Text(fastingTime, style: theme.textTheme.titleMedium),
+                      onTap: _pickFastingTime,
+                    ),
+                ]),
+              ),
+              const SizedBox(height: 16),
+              Text(tr('notif_permission_hint'),
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// =============================================================================
+// 21c. Benachrichtigungs-Einstellungen
 // =============================================================================
 // =============================================================================
 //  22. Tutorial beim ersten Start
