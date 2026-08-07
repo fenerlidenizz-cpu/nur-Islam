@@ -606,6 +606,57 @@ const Map<String, List<String>> _strings = {
   'fasting_days_suffix': ['Tage', 'gün', 'days'],
   'fasting_month_count': ['Diesen Monat', 'Bu ay', 'This month'],
   'fasting_last_days': ['Letzte Tage', 'Son günler', 'Recent days'],
+  'dialog_close': ['Verstanden', 'Anladım', 'Got it'],
+  'zakat_info_nisab_t': ['Was ist die Nisab-Grenze?', 'Nisap sınırı nedir?', 'What is the Nisab threshold?'],
+  'zakat_info_nisab_b': [
+    'Die Nisab-Grenze ist der Mindestbetrag an Vermoegen, ab dem Zakat ueberhaupt faellig wird. Sie orientiert sich am Gegenwert von 85 g Gold oder 595 g Silber. Liegt dein zakatfaehiges Vermoegen darunter, musst du kein Zakat zahlen.',
+    'Nisap siniri, zekatin farz oldugu asgari varlik miktaridir. 85 g altin veya 595 g gumusun karsiligina gore hesaplanir. Varligin bunun altindaysa zekat odemen gerekmez.',
+    'The Nisab threshold is the minimum amount of wealth above which Zakat becomes due. It is based on the value of 85 g of gold or 595 g of silver. If your zakatable assets are below it, no Zakat is due.',
+  ],
+  'zakat_info_other_t': ['Geschaeftsvermoegen & Sonstiges', 'Ticari mal ve diger varliklar', 'Business assets & other'],
+  'zakat_info_other_b': [
+    'Hierzu zaehlen z. B. Warenbestand und Handelsware zum aktuellen Verkaufswert, Firmenanteile, vermietete Gegenstaende oder andere Vermoegenswerte, die nicht Bargeld, Gold oder Silber sind. Selbst genutzte Gegenstaende wie dein Auto oder deine Wohnung zaehlen nicht dazu.',
+    'Buna satis degeri uzerinden mal stogu, ticari esya, sirket paylari, kiraya verilen esyalar veya nakit, altin ya da gumus disindaki diger varliklar dahildir. Kendi kullandigin araba veya ev buna dahil degildir.',
+    'This includes things like trade goods and inventory at current sale value, business shares, rented-out items, or other assets that are not cash, gold or silver. Items for personal use, such as your car or home, do not count.',
+  ],
+  'zakat_info_debt_t': ['Was zaehlt als kurzfristige Schulden?', 'Kisa vadeli borc nedir?', 'What counts as short-term debt?'],
+  'zakat_info_debt_b': [
+    'Gemeint sind Schulden, die innerhalb der naechsten 12 Monate faellig werden, z. B. offene Rechnungen, kurzfristige Kredite oder faellige Miete. Sie werden von deinem Vermoegen abgezogen, bevor die Nisab-Grenze geprueft wird. Langfristige Schulden (z. B. eine Hausfinanzierung ueber viele Jahre) werden meist nicht in voller Hoehe abgezogen.',
+    'Onumuzdeki 12 ay icinde odenmesi gereken borclardir, orn. acik faturalar, kisa vadeli krediler veya odenmemis kira. Nisap sinirina bakilmadan once varligindan dusulur. Uzun vadeli borclar (orn. yillara yayilan konut kredisi) genelde tam olarak dusulmez.',
+    'This means debts due within the next 12 months, e.g. open invoices, short-term loans or outstanding rent. They are subtracted from your assets before checking the Nisab threshold. Long-term debts (e.g. a mortgage spread over many years) are usually not deducted in full.',
+  ],
+  'zakat_info_general_t': ['Wie funktioniert die Zakat-Berechnung?', 'Zekat hesaplamasi nasil calisir?', 'How does the Zakat calculation work?'],
+  'zakat_info_general_b': [
+    'Zuerst werden alle zakatfaehigen Vermoegenswerte (Bargeld, Gold, Silber, Geschaeftsvermoegen) addiert und die kurzfristigen Schulden abgezogen. Liegt das Ergebnis ueber der Nisab-Grenze, sind 2,5% davon als Zakat faellig. Diese Berechnung ersetzt keine verbindliche Fiqh-Beratung.',
+    'Once tum zekata tabi varliklar (nakit, altin, gumus, ticari mal) toplanir ve kisa vadeli borclar dusulur. Sonuc nisap sinirinin ustundeyse, bunun %2,5\'i zekat olarak odenir. Bu hesaplama baglayici bir fikih goruesunun yerini tutmaz.',
+    'First, all zakatable assets (cash, gold, silver, business assets) are added up and short-term debts are subtracted. If the result is above the Nisab threshold, 2.5% of it is due as Zakat. This calculation is not a substitute for binding religious guidance.',
+  ],
+  'whats_new_title': ['Neu in dieser Version', 'Bu sürümde yeni', 'New in this version'],
+  'whats_new_zakat_t': ['Zakat-Rechner mit Erklaerungen', 'Aciklamali zekat hesaplayici', 'Zakat calculator with explanations'],
+  'whats_new_zakat_b': [
+    'Berechne deine jaehrliche Zakat inkl. Nisab-Grenze. Kleine Info-Symbole erklaeren jetzt Nisab, Vermoegenswerte und Schulden.',
+    'Nisap siniri dahil yillik zekatini hesapla. Kucuk bilgi simgeleri artik nisap, varliklar ve borclari aciklar.',
+    'Calculate your annual Zakat including the Nisab threshold. Small info icons now explain Nisab, assets and debts.',
+  ],
+  'whats_new_fasting_t': ['Fastentage im Kalender markieren', 'Oruc gunlerini takvimde isaretle', 'Mark fasting days in the calendar'],
+  'whats_new_fasting_b': [
+    'Im Kalender kannst du einen Tag jetzt lange gedrueckt halten, um ihn als Fastentag einzutragen. Der Fasten-Tracker zeigt weiterhin deine Serie und Uebersicht.',
+    'Takvimde bir gune artik basili tutarak onu oruc gunu olarak isaretleyebilirsin. Oruc takibi sayfasi serini ve genel gorunumu gostermeye devam ediyor.',
+    'In the calendar you can now long-press a day to mark it as a fasting day. The fasting tracker still shows your streak and overview.',
+  ],
+  'whats_new_speed_t': ['Schnellere Moscheensuche', 'Daha hizli cami arama', 'Faster mosque search'],
+  'whats_new_speed_b': [
+    'Die Umkreissuche nach Moscheen laeuft jetzt ueber mehrere Server gleichzeitig und liefert Ergebnisse spuerbar schneller.',
+    'Yakindaki cami aramasi artik ayni anda birden fazla sunucu uzerinden calisiyor ve sonuclari daha hizli getiriyor.',
+    'The nearby mosque search now queries multiple servers at once and delivers results noticeably faster.',
+  ],
+  'fasting_marked_done': ['Als Fastentag markiert', 'Oruc gunu olarak isaretlendi', 'Marked as fasting day'],
+  'fasting_marked_undone': ['Fastentag entfernt', 'Oruc gunu kaldirildi', 'Fasting day removed'],
+  'fasting_calendar_hint': [
+    'Tipp: Lange auf einen Tag druecken, um ihn als Fastentag zu markieren.',
+    'Ipucu: Bir gunu oruc gunu olarak isaretlemek icin basili tut.',
+    'Tip: Long-press a day to mark it as a fasting day.',
+  ],
 };
 
 String tr(String key) {
@@ -1085,6 +1136,7 @@ class AppState extends ChangeNotifier {
 
   // Kerahat
   bool tutorialDone = false;
+  String lastSeenVersion = '';
   int widgetAlpha = 170; // 0 = unsichtbar, 255 = deckend
   bool showKerahat = false;
   int kerahatSunriseMin = 45;
@@ -1137,6 +1189,7 @@ class AppState extends ChangeNotifier {
     }
     userName = _p.getString('userName') ?? '';
     tutorialDone = _p.getBool('tutorialDone') ?? false;
+    lastSeenVersion = _p.getString('lastSeenVersion') ?? '';
     widgetAlpha = _p.getInt('widget_alpha') ?? 170;
     showKerahat = _p.getBool('showKerahat') ?? false;
     kerahatSunriseMin = _p.getInt('kSunrise') ?? 45;
@@ -1318,6 +1371,12 @@ class AppState extends ChangeNotifier {
   void finishTutorial() {
     tutorialDone = true;
     _p.setBool('tutorialDone', true);
+    notifyListeners();
+  }
+
+  void markVersionSeen(String v) {
+    lastSeenVersion = v;
+    _p.setString('lastSeenVersion', v);
     notifyListeners();
   }
 
@@ -2117,6 +2176,11 @@ class _RootShellState extends State<RootShell> {
           barrierDismissible: false,
           builder: (_) => const OnboardingDialog(),
         );
+      } else if (appState.lastSeenVersion != kAppVersion && mounted) {
+        showDialog<void>(
+          context: context,
+          builder: (_) => WhatsNewDialog(version: kAppVersion, items: kWhatsNewItems),
+        ).then((_) => appState.markVersionSeen(kAppVersion));
       }
     });
   }
@@ -4714,6 +4778,29 @@ class _ZakatPageState extends State<ZakatPage> {
   bool _basisGold = true;
   SharedPreferences? _prefs;
 
+  void _showInfoDialog(String titleKey, String bodyKey) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr(titleKey)),
+        content: Text(tr(bodyKey), style: const TextStyle(height: 1.4)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('dialog_close'))),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoIcon(String titleKey, String bodyKey) {
+    return IconButton(
+      icon: const Icon(Icons.info_outline, size: 20),
+      tooltip: tr(titleKey),
+      onPressed: () => _showInfoDialog(titleKey, bodyKey),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -4762,7 +4849,7 @@ class _ZakatPageState extends State<ZakatPage> {
     super.dispose();
   }
 
-  Widget _field(TextEditingController c, String labelKey, {String suffix = '€'}) {
+  Widget _field(TextEditingController c, String labelKey, {String suffix = '€', String? infoKey}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
@@ -4771,6 +4858,7 @@ class _ZakatPageState extends State<ZakatPage> {
         decoration: InputDecoration(
           labelText: tr(labelKey),
           suffixText: suffix,
+          suffixIcon: infoKey == null ? null : _infoIcon(labelKey, infoKey),
           border: const OutlineInputBorder(),
         ),
         onChanged: (_) {
@@ -4814,10 +4902,13 @@ class _ZakatPageState extends State<ZakatPage> {
               _field(_goldPCtrl, 'zakat_gold_price'),
               _field(_silverGCtrl, 'zakat_silver_grams', suffix: 'g'),
               _field(_silverPCtrl, 'zakat_silver_price'),
-              _field(_otherCtrl, 'zakat_other_assets'),
-              _field(_debtCtrl, 'zakat_debts'),
+              _field(_otherCtrl, 'zakat_other_assets', infoKey: 'zakat_info_other_b'),
+              _field(_debtCtrl, 'zakat_debts', infoKey: 'zakat_info_debt_b'),
               const SizedBox(height: 8),
-              Text(tr('zakat_nisab_basis'), style: theme.textTheme.titleSmall),
+              Row(children: [
+                Text(tr('zakat_nisab_basis'), style: theme.textTheme.titleSmall),
+                _infoIcon('zakat_info_nisab_t', 'zakat_info_nisab_b'),
+              ]),
               const SizedBox(height: 8),
               SegmentedButton<bool>(
                 segments: [
@@ -4858,6 +4949,20 @@ class _ZakatPageState extends State<ZakatPage> {
                 ),
               ),
               const SizedBox(height: 16),
+              Card(
+                child: ExpansionTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: Text(tr('zakat_info_general_t')),
+                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(tr('zakat_info_general_b'), style: const TextStyle(height: 1.4)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               Text(tr('zakat_disclaimer'),
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
             ],
@@ -5563,7 +5668,9 @@ class _CalendarPageState extends State<CalendarPage> {
           },
         ),
       ),
-      body: GestureDetector(
+      body: AnimatedBuilder(
+        animation: appState,
+        builder: (context, _) => GestureDetector(
         onHorizontalDragEnd: (d) {
           final v = d.primaryVelocity ?? 0;
           if (v < -250) _shiftMonth(1);
@@ -5621,14 +5728,27 @@ class _CalendarPageState extends State<CalendarPage> {
               final isSelected = d.year == widget.initial.year &&
                   d.month == widget.initial.month &&
                   d.day == widget.initial.day;
+              final fasted = appState.hasFasted(d);
               return _CalendarCell(
                 date: d,
                 special: sp,
                 isToday: isToday,
                 isSelected: isSelected,
+                fasted: fasted,
                 onTap: () {
                   _rememberedMonth = _month;
                   Navigator.pop(context, d);
+                },
+                onToggleFasted: () {
+                  appState.toggleFasted(d);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      duration: const Duration(seconds: 2),
+                      content: Text(appState.hasFasted(d)
+                          ? tr('fasting_marked_done')
+                          : tr('fasting_marked_undone')),
+                    ),
+                  );
                 },
               );
             },
@@ -5666,7 +5786,12 @@ class _CalendarPageState extends State<CalendarPage> {
           Text(tr('swipe_hint'),
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: theme.colorScheme.outline)),
+          const SizedBox(height: 6),
+          Text(tr('fasting_calendar_hint'),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.outline)),
         ],
+      ),
       ),
       ),
     );
@@ -5677,13 +5802,17 @@ class _CalendarCell extends StatelessWidget {
   final DateTime date;
   final ({SpecialDay day, bool first, bool last})? special;
   final bool isToday, isSelected;
+  final bool fasted;
   final VoidCallback onTap;
+  final VoidCallback? onToggleFasted;
   const _CalendarCell({
     required this.date,
     required this.special,
     required this.isToday,
     required this.isSelected,
+    this.fasted = false,
     required this.onTap,
+    this.onToggleFasted,
   });
 
   @override
@@ -5702,6 +5831,7 @@ class _CalendarCell extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onToggleFasted,
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: multi ? 0 : 2, vertical: 2),
         decoration: BoxDecoration(
@@ -5727,6 +5857,11 @@ class _CalendarCell extends StatelessWidget {
                 height: 5,
                 decoration: BoxDecoration(color: colour, shape: BoxShape.circle),
               ),
+          if (fasted)
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(Icons.nightlight_round, size: 9, color: pal.gold),
+            ),
           ],
         ),
       ),
@@ -6000,6 +6135,77 @@ class _RankRow extends StatelessWidget {
   }
 }
 
+const String kAppVersion = '1.1.6';
+
+const List<(IconData, String, String)> kWhatsNewItems = [
+  (Icons.calculate_outlined, 'whats_new_zakat_t', 'whats_new_zakat_b'),
+  (Icons.nightlight_round, 'whats_new_fasting_t', 'whats_new_fasting_b'),
+  (Icons.speed, 'whats_new_speed_t', 'whats_new_speed_b'),
+];
+
+class WhatsNewDialog extends StatelessWidget {
+  final String version;
+  final List<(IconData, String, String)> items;
+  const WhatsNewDialog({super.key, required this.version, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Dialog(
+      insetPadding: const EdgeInsets.all(24),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.auto_awesome, size: 40, color: pal.gold),
+            const SizedBox(height: 12),
+            Text(tr('whats_new_title'),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text('Version $version',
+                style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline)),
+            const SizedBox(height: 18),
+            for (final it in items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(it.$1, color: pal.gold, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(tr(it.$2), style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 2),
+                          Text(tr(it.$3), style: theme.textTheme.bodySmall?.copyWith(height: 1.4)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(tr('dialog_close')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// 21b. Was ist neu (Update-Hinweis)
+// =============================================================================
 // =============================================================================
 //  22. Tutorial beim ersten Start
 // =============================================================================
