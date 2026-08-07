@@ -1548,7 +1548,7 @@ class AppState extends ChangeNotifier {
               '${p.label} – ${tr('notif_prayer_body_suffix')}',
               tz.TZDateTime.from(t, tz.local),
               details,
-              : .exactAllowWhileIdle,
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
             );
           } catch (_) {}
         }
@@ -1579,7 +1579,7 @@ class AppState extends ChangeNotifier {
                 ],
               ),
             ),
-            : .exactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           );
         } catch (_) {}
       }
