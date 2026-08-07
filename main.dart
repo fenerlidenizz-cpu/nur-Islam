@@ -566,6 +566,35 @@ const Map<String, List<String>> _strings = {
     'Boncuklara veya ekranın alt üçte birine dokun',
     'Tap the beads or the lower third of the screen',
   ],
+  'zakat_calculator': ['Zakat-Rechner', 'Zekat Hesaplayici', 'Zakat calculator'],
+  'zakat_intro': [
+    'Berechne, wie viel Zakat (Pflichtabgabe) du dieses Jahr zahlen musst. Alle Angaben bleiben nur auf deinem Geraet.',
+    'Bu yil ne kadar zekat (farz bagis) odemen gerektigini hesapla. Tum veriler yalnizca cihazinda kalir.',
+    'Calculate how much Zakat (obligatory almsgiving) you owe this year. All figures stay only on your device.',
+  ],
+  'zakat_cash': ['Bargeld & Bankguthaben', 'Nakit ve banka bakiyesi', 'Cash & bank balance'],
+  'zakat_gold_grams': ['Gold (Gramm)', 'Altin (gram)', 'Gold (grams)'],
+  'zakat_gold_price': ['Goldpreis pro Gramm', 'Gram altin fiyati', 'Gold price per gram'],
+  'zakat_silver_grams': ['Silber (Gramm)', 'Gumus (gram)', 'Silver (grams)'],
+  'zakat_silver_price': ['Silberpreis pro Gramm', 'Gram gumus fiyati', 'Silver price per gram'],
+  'zakat_other_assets': ['Geschaeftsvermoegen & Sonstiges', 'Ticari mal ve diger varliklar', 'Business assets & other'],
+  'zakat_debts': ['Kurzfristige Schulden', 'Kisa vadeli borclar', 'Short-term debts'],
+  'zakat_nisab_basis': ['Nisab-Grenze berechnen nach', 'Nisap sinirini hesapla', 'Calculate Nisab threshold using'],
+  'zakat_basis_gold': ['Gold (85 g)', 'Altin (85 g)', 'Gold (85 g)'],
+  'zakat_basis_silver': ['Silber (595 g)', 'Gumus (595 g)', 'Silver (595 g)'],
+  'zakat_total_assets': ['Zakatfaehiges Vermoegen', 'Zekata tabi varlik', 'Zakatable assets'],
+  'zakat_nisab_value': ['Nisab-Grenze', 'Nisap siniri', 'Nisab threshold'],
+  'zakat_result_due': ['Faelliger Zakat (2,5%)', 'Odenecek zekat (%2,5)', 'Zakat due (2.5%)'],
+  'zakat_result_not_due': [
+    'Dein Vermoegen liegt unter der Nisab-Grenze - kein Zakat faellig.',
+    'Varligin nisap sinirinin altinda - zekat farz degil.',
+    'Your assets are below the Nisab threshold - no Zakat is due.',
+  ],
+  'zakat_disclaimer': [
+    'Ersetzt keine verbindliche Fiqh-Beratung. Preise bitte selbst aktuell halten.',
+    'Baglayici bir fikih goruesunun yerini tutmaz. Fiyatlari guencel tutman gerekir.',
+    'Not a substitute for binding religious guidance. Please keep prices up to date.',
+  ],
 };
 
 String tr(String key) {
@@ -3808,6 +3837,14 @@ class MoreTab extends StatelessWidget {
                 onTap: () => Navigator.push(
                     context, MaterialPageRoute(builder: (_) => const LocationPickerPage())),
               ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.calculate_outlined),
+              title: Text(tr('zakat_calculator')),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                  context, MaterialPageRoute(builder: (_) => const ZakatPage())),
+            ),
             ]),
           ),
         ),
@@ -4599,6 +4636,180 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
 // =============================================================================
 //  18. Eigene Zeiten einfügen
 // =============================================================================
+
+// ============================================================
+// Zakat-Rechner
+// ============================================================
+class ZakatPage extends StatefulWidget {
+  const ZakatPage({super.key});
+  @override
+  State<ZakatPage> createState() => _ZakatPageState();
+}
+
+class _ZakatPageState extends State<ZakatPage> {
+  final _cashCtrl = TextEditingController();
+  final _goldGCtrl = TextEditingController();
+  final _goldPCtrl = TextEditingController();
+  final _silverGCtrl = TextEditingController();
+  final _silverPCtrl = TextEditingController();
+  final _otherCtrl = TextEditingController();
+  final _debtCtrl = TextEditingController();
+  bool _basisGold = true;
+  SharedPreferences? _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final p = await SharedPreferences.getInstance();
+    _prefs = p;
+    _cashCtrl.text = p.getString('zakat_cash') ?? '';
+    _goldGCtrl.text = p.getString('zakat_gold_g') ?? '';
+    _goldPCtrl.text = p.getString('zakat_gold_p') ?? '75';
+    _silverGCtrl.text = p.getString('zakat_silver_g') ?? '';
+    _silverPCtrl.text = p.getString('zakat_silver_p') ?? '0.9';
+    _otherCtrl.text = p.getString('zakat_other') ?? '';
+    _debtCtrl.text = p.getString('zakat_debt') ?? '';
+    _basisGold = p.getBool('zakat_basis_gold') ?? true;
+    if (mounted) setState(() {});
+  }
+
+  void _save() {
+    final p = _prefs;
+    if (p == null) return;
+    p.setString('zakat_cash', _cashCtrl.text);
+    p.setString('zakat_gold_g', _goldGCtrl.text);
+    p.setString('zakat_gold_p', _goldPCtrl.text);
+    p.setString('zakat_silver_g', _silverGCtrl.text);
+    p.setString('zakat_silver_p', _silverPCtrl.text);
+    p.setString('zakat_other', _otherCtrl.text);
+    p.setString('zakat_debt', _debtCtrl.text);
+    p.setBool('zakat_basis_gold', _basisGold);
+  }
+
+  double _n(TextEditingController c) =>
+      double.tryParse(c.text.replaceAll(',', '.')) ?? 0;
+
+  @override
+  void dispose() {
+    _cashCtrl.dispose();
+    _goldGCtrl.dispose();
+    _goldPCtrl.dispose();
+    _silverGCtrl.dispose();
+    _silverPCtrl.dispose();
+    _otherCtrl.dispose();
+    _debtCtrl.dispose();
+    super.dispose();
+  }
+
+  Widget _field(TextEditingController c, String labelKey, {String suffix = '€'}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: c,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: tr(labelKey),
+          suffixText: suffix,
+          border: const OutlineInputBorder(),
+        ),
+        onChanged: (_) {
+          _save();
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+        final cash = _n(_cashCtrl);
+        final goldG = _n(_goldGCtrl);
+        final goldP = _n(_goldPCtrl);
+        final silverG = _n(_silverGCtrl);
+        final silverP = _n(_silverPCtrl);
+        final other = _n(_otherCtrl);
+        final debt = _n(_debtCtrl);
+
+        final rawTotal = cash + goldG * goldP + silverG * silverP + other - debt;
+        final totalAssets = rawTotal < 0 ? 0.0 : rawTotal;
+        final nisab = _basisGold ? 85 * goldP : 595 * silverP;
+        final due = (nisab > 0 && totalAssets >= nisab) ? totalAssets * 0.025 : 0.0;
+
+        String money(double v) => '${v.toStringAsFixed(2)} €';
+
+        return Scaffold(
+          appBar: AppBar(title: Text(tr('zakat_calculator'))),
+          body: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Text(tr('zakat_intro'), style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 20),
+              _field(_cashCtrl, 'zakat_cash'),
+              _field(_goldGCtrl, 'zakat_gold_grams', suffix: 'g'),
+              _field(_goldPCtrl, 'zakat_gold_price'),
+              _field(_silverGCtrl, 'zakat_silver_grams', suffix: 'g'),
+              _field(_silverPCtrl, 'zakat_silver_price'),
+              _field(_otherCtrl, 'zakat_other_assets'),
+              _field(_debtCtrl, 'zakat_debts'),
+              const SizedBox(height: 8),
+              Text(tr('zakat_nisab_basis'), style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(value: true, label: Text(tr('zakat_basis_gold'))),
+                  ButtonSegment(value: false, label: Text(tr('zakat_basis_silver'))),
+                ],
+                selected: {_basisGold},
+                onSelectionChanged: (s) {
+                  _basisGold = s.first;
+                  _save();
+                  setState(() {});
+                },
+              ),
+              const SizedBox(height: 24),
+              Card(
+                color: pal.gold.withValues(alpha: 0.12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(tr('zakat_total_assets')),
+                      Text(money(totalAssets)),
+                    ]),
+                    const SizedBox(height: 6),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(tr('zakat_nisab_value')),
+                      Text(money(nisab)),
+                    ]),
+                    const Divider(height: 20),
+                    if (due > 0)
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Text(tr('zakat_result_due'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text(money(due), style: TextStyle(fontWeight: FontWeight.bold, color: pal.gold, fontSize: 18)),
+                      ])
+                    else
+                      Text(tr('zakat_result_not_due')),
+                  ]),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(tr('zakat_disclaimer'),
+                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
 
 class CustomTablePage extends StatefulWidget {
   const CustomTablePage({super.key});
